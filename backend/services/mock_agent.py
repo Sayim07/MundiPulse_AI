@@ -76,19 +76,19 @@ async def run_mock_agent(crop: str, district: str, state: str = "West Bengal") -
     records: list[PriceRecord] = []
     for entry in district_data:
         noise = random.randint(-20, 20)
-        distance = float(entry["distance"])
+        distance = entry["distance"]
         transport_cost = round(distance * TRANSPORT_RATE_PER_KM_PER_QUINTAL, 2)
 
         records.append(PriceRecord(
-            mandi_name=str(entry["mandi_name"]),
-            district=str(entry["district"]),
+            mandi_name=entry["mandi_name"],
+            district=entry["district"],
             crop=crop,
             variety="Common",
             modal_price_per_quintal=float(entry["modal"] + noise),
             min_price=float(entry["min"] + noise),
             max_price=float(entry["max"] + noise),
             date="2026-08-20",
-            source_portal=str(entry["source"]),
+            source_portal=entry["source"],
             distance_km=distance,
             transport_cost_per_quintal=transport_cost,
         ))
