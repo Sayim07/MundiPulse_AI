@@ -1,0 +1,488 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MandiPulse AI — Agri-Tech Dark Mode Theme
+   Premium dark theme with neon emerald accents for an agricultural dashboard
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ─────────────────────────────────────────────────────────── */
+:root {
+  /* Core Palette */
+  --mp-bg-deepest:     #0a0f1a;
+  --mp-bg-deep:        #0f172a;   /* slate-900 */
+  --mp-bg-card:        #1e293b;   /* slate-800 */
+  --mp-bg-elevated:    #334155;   /* slate-700 */
+  --mp-bg-hover:       #475569;   /* slate-600 */
+
+  /* Neon Emerald Accent System */
+  --mp-emerald-50:     #ecfdf5;
+  --mp-emerald-100:    #d1fae5;
+  --mp-emerald-200:    #a7f3d0;
+  --mp-emerald-300:    #6ee7b7;
+  --mp-emerald-400:    #34d399;
+  --mp-emerald-500:    #10b981;
+  --mp-emerald-600:    #059669;
+  --mp-emerald-neon:   #00ff88;
+  --mp-emerald-glow:   rgba(0, 255, 136, 0.15);
+
+  /* Accent Complement */
+  --mp-cyan-400:       #22d3ee;
+  --mp-amber-400:      #fbbf24;
+  --mp-red-400:        #f87171;
+
+  /* Text */
+  --mp-text-primary:   #f1f5f9;   /* slate-100 */
+  --mp-text-secondary: #94a3b8;   /* slate-400 */
+  --mp-text-muted:     #64748b;   /* slate-500 */
+
+  /* Borders */
+  --mp-border:         rgba(148, 163, 184, 0.12);
+  --mp-border-glow:    rgba(0, 255, 136, 0.25);
+
+  /* Shadows */
+  --mp-shadow-sm:      0 1px 2px rgba(0, 0, 0, 0.3);
+  --mp-shadow-md:      0 4px 12px rgba(0, 0, 0, 0.4);
+  --mp-shadow-lg:      0 8px 32px rgba(0, 0, 0, 0.5);
+  --mp-shadow-glow:    0 0 20px rgba(0, 255, 136, 0.15), 0 0 60px rgba(0, 255, 136, 0.05);
+
+  /* Typography */
+  --mp-font-sans:      'Inter', system-ui, -apple-system, sans-serif;
+  --mp-font-mono:      'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* Transitions */
+  --mp-ease:           cubic-bezier(0.4, 0, 0.2, 1);
+  --mp-ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Custom cursor visibility */
+  --cursor-size:       12px;
+  --cursor-expanded:   40px;
+}
+
+/* ── Tailwind v4 Theme Integration ─────────────────────────────────────────── */
+@theme inline {
+  --color-background: var(--mp-bg-deepest);
+  --color-foreground: var(--mp-text-primary);
+  --font-sans: var(--mp-font-sans);
+  --font-mono: var(--mp-font-mono);
+
+  /* Custom colors for utility classes */
+  --color-mp-bg-deepest: var(--mp-bg-deepest);
+  --color-mp-bg-deep: var(--mp-bg-deep);
+  --color-mp-bg-card: var(--mp-bg-card);
+  --color-mp-bg-elevated: var(--mp-bg-elevated);
+  --color-mp-bg-hover: var(--mp-bg-hover);
+
+  --color-mp-emerald-50: var(--mp-emerald-50);
+  --color-mp-emerald-100: var(--mp-emerald-100);
+  --color-mp-emerald-200: var(--mp-emerald-200);
+  --color-mp-emerald-300: var(--mp-emerald-300);
+  --color-mp-emerald-400: var(--mp-emerald-400);
+  --color-mp-emerald-500: var(--mp-emerald-500);
+  --color-mp-emerald-600: var(--mp-emerald-600);
+  --color-mp-emerald-neon: var(--mp-emerald-neon);
+
+  --color-mp-cyan: var(--mp-cyan-400);
+  --color-mp-amber: var(--mp-amber-400);
+  --color-mp-red: var(--mp-red-400);
+
+  --color-mp-text-primary: var(--mp-text-primary);
+  --color-mp-text-secondary: var(--mp-text-secondary);
+  --color-mp-text-muted: var(--mp-text-muted);
+
+  --color-mp-border: var(--mp-border);
+  --color-mp-border-glow: var(--mp-border-glow);
+}
+
+/* ── Base Styles ───────────────────────────────────────────────────────────── */
+* {
+  cursor: none !important; /* Hide default cursor everywhere */
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--mp-bg-deepest);
+  color: var(--mp-text-primary);
+  font-family: var(--mp-font-sans);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Subtle background mesh gradient */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0, 255, 136, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 80% at 80% 90%, rgba(34, 211, 238, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0, 255, 136, 0.02) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Custom Scrollbar ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--mp-bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mp-bg-elevated);
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mp-emerald-600);
+}
+
+/* ── Glassmorphism Utilities ───────────────────────────────────────────────── */
+.glass {
+  background: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--mp-border);
+}
+
+.glass-heavy {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid var(--mp-border);
+}
+
+.glass-modal {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 136, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 80px rgba(0, 255, 136, 0.08);
+}
+
+/* ── Glow Effects ──────────────────────────────────────────────────────────── */
+.glow-emerald {
+  box-shadow: var(--mp-shadow-glow);
+}
+
+.glow-emerald-text {
+  text-shadow: 0 0 20px rgba(0, 255, 136, 0.5), 0 0 40px rgba(0, 255, 136, 0.2);
+}
+
+.glow-border {
+  border: 1px solid var(--mp-border-glow);
+  box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.05);
+}
+
+/* ── Neon Button ───────────────────────────────────────────────────────────── */
+.btn-neon {
+  position: relative;
+  background: linear-gradient(135deg, var(--mp-emerald-600), var(--mp-emerald-500));
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  transition: all 0.3s var(--mp-ease);
+  overflow: hidden;
+}
+
+.btn-neon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s var(--mp-ease);
+}
+
+.btn-neon:hover {
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), 0 0 60px rgba(0, 255, 136, 0.1);
+  transform: translateY(-1px);
+  border-color: var(--mp-emerald-neon);
+}
+
+.btn-neon:hover::before {
+  opacity: 1;
+}
+
+.btn-neon:active {
+  transform: translateY(0);
+}
+
+/* ── Card Styles ───────────────────────────────────────────────────────────── */
+.bento-card {
+  background: var(--mp-bg-card);
+  border: 1px solid var(--mp-border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  transition: all 0.4s var(--mp-ease);
+}
+
+.bento-card:hover {
+  border-color: var(--mp-border-glow);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.08);
+  transform: translateY(-2px);
+}
+
+/* ── Terminal Window ───────────────────────────────────────────────────────── */
+.terminal {
+  background: var(--mp-bg-deepest);
+  border: 1px solid var(--mp-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.terminal-header {
+  background: var(--mp-bg-card);
+  border-bottom: 1px solid var(--mp-border);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.terminal-body {
+  padding: 1rem;
+  font-family: var(--mp-font-mono);
+  font-size: 0.8rem;
+  line-height: 1.8;
+  max-height: 400px;
+  overflow-y: auto;
+  color: var(--mp-text-secondary);
+}
+
+.terminal-line-system {
+  color: var(--mp-cyan-400);
+}
+
+.terminal-line-agent {
+  color: var(--mp-text-secondary);
+}
+
+.terminal-line-success {
+  color: var(--mp-emerald-neon);
+}
+
+.terminal-line-llm {
+  color: var(--mp-amber-400);
+}
+
+.terminal-line-error {
+  color: var(--mp-red-400);
+}
+
+/* ── Modal Overlay ─────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Input Styles ──────────────────────────────────────────────────────────── */
+.input-glow {
+  background: var(--mp-bg-card);
+  border: 1px solid var(--mp-border);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  color: var(--mp-text-primary);
+  font-family: var(--mp-font-sans);
+  font-size: 0.95rem;
+  transition: all 0.3s var(--mp-ease);
+  outline: none;
+  width: 100%;
+}
+
+.input-glow::placeholder {
+  color: var(--mp-text-muted);
+}
+
+.input-glow:focus {
+  border-color: var(--mp-emerald-500);
+  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1), 0 0 20px rgba(0, 255, 136, 0.05);
+}
+
+/* ── Select Dropdown ───────────────────────────────────────────────────────── */
+.select-glow {
+  background: var(--mp-bg-card);
+  border: 1px solid var(--mp-border);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  color: var(--mp-text-primary);
+  font-family: var(--mp-font-sans);
+  font-size: 0.95rem;
+  transition: all 0.3s var(--mp-ease);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+.select-glow:focus {
+  border-color: var(--mp-emerald-500);
+  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1), 0 0 20px rgba(0, 255, 136, 0.05);
+}
+
+/* ── Badge / Pill ──────────────────────────────────────────────────────────── */
+.badge-emerald {
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--mp-emerald-400);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.badge-amber {
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--mp-amber-400);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-cyan {
+  background: rgba(34, 211, 238, 0.1);
+  color: var(--mp-cyan-400);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ── Spinner ───────────────────────────────────────────────────────────────── */
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--mp-emerald-neon);
+  border-radius: 50%;
+  animation: spin-slow 0.8s linear infinite;
+}
+
+/* ── Pulse Animation ───────────────────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(0, 255, 136, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(0, 255, 136, 0.8), 0 0 40px rgba(0, 255, 136, 0.2);
+  }
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--mp-emerald-neon);
+  border-radius: 50%;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Gradient Text ─────────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--mp-emerald-400), var(--mp-emerald-neon), var(--mp-cyan-400));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Selection Color ───────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--mp-text-primary);
+}
+
+/* ── Smooth Scroll Sections ────────────────────────────────────────────────── */
+.scroll-section {
+  scroll-snap-type: y proximity;
+}
+
+.scroll-section > section {
+  scroll-snap-align: start;
+}
+
+/* ── Data Table ────────────────────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table thead th {
+  background: var(--mp-bg-deep);
+  color: var(--mp-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--mp-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.data-table tbody tr {
+  transition: background 0.2s var(--mp-ease);
+}
+
+.data-table tbody tr:hover {
+  background: rgba(0, 255, 136, 0.03);
+}
+
+.data-table tbody td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--mp-border);
+  font-size: 0.875rem;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Responsive breakpoints ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .bento-card {
+    padding: 1rem;
+  }
+
+  .terminal-body {
+    font-size: 0.7rem;
+    max-height: 300px;
+  }
+}
