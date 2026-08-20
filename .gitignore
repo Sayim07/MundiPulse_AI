@@ -1,0 +1,124 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# MandiPulse AI — Root .gitignore
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ── Environment & Secret Variables ──────────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!*.env.example
+
+# ── Python / Backend ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# ── Node.js / Next.js / Frontend ───────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+frontend/out/
+.turbo/
+frontend/.turbo/
+
+# Next.js Build Artifacts & Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Next.js TypeScript definitions
+next-env.d.ts
+frontend/next-env.d.ts
+
+# ── Local Database & Runtime Files ─────────────────────────────────────────
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Agent Navigation Cache (runtime generated)
+backend/agent/cache/*
+!backend/agent/cache/.gitkeep
+
+# ── IDEs & Operating System Artifacts ──────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains (PyCharm, WebStorm, etc.)
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Temporary Scratch Files
+*.tmp
+*.temp
+scratch/
+
+# Product Requirements Documents / Private Specs
+MandiPulse_AI_PRD.md
+PRD.md

@@ -1,0 +1,9 @@
+{
+  "rates": [
+    {"vehicle_type": "Auto/Tempo", "rate_per_km_per_quintal": 3.5, "max_distance_km": 50},
+    {"vehicle_type": "Mini Truck", "rate_per_km_per_quintal": 2.8, "max_distance_km": 150},
+    {"vehicle_type": "Full Truck", "rate_per_km_per_quintal": 2.0, "max_distance_km": 500}
+  ],
+  "default_rate_per_km_per_quintal": 3.5,
+  "notes": "Rates are estimates for West Bengal rural transport (2026). Actual costs may vary by road conditions, fuel price, and load volume."
+}

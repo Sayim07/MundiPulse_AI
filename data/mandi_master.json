@@ -1,0 +1,12 @@
+{
+  "mandis": [
+    {"name": "Dhaniakhali Mandi", "district": "Hooghly", "state": "West Bengal", "lat": 22.98, "lon": 88.28},
+    {"name": "Burdwan Mandi", "district": "Purba Bardhaman", "state": "West Bengal", "lat": 23.23, "lon": 87.85},
+    {"name": "Memari Mandi", "district": "Purba Bardhaman", "state": "West Bengal", "lat": 23.20, "lon": 88.10},
+    {"name": "Krishnanagar Mandi", "district": "Nadia", "state": "West Bengal", "lat": 23.40, "lon": 88.50},
+    {"name": "Ranaghat Mandi", "district": "Nadia", "state": "West Bengal", "lat": 23.18, "lon": 88.57},
+    {"name": "Katwa Mandi", "district": "Purba Bardhaman", "state": "West Bengal", "lat": 23.65, "lon": 88.13}
+  ],
+  "crops": ["Paddy", "Potato", "Mustard", "Jute", "Wheat"],
+  "districts": ["Hooghly", "Purba Bardhaman", "Nadia", "Bankura", "Birbhum"]
+}
