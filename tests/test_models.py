@@ -34,11 +34,11 @@ def test_price_record_valid():
 
 def test_price_record_missing_required():
     with pytest.raises(ValidationError):
-        PriceRecord(
-            mandi_name="Incomplete Mandi",
-            district="Hooghly",
-            # missing crop, modal_price, etc.
-        )
+        PriceRecord.model_validate({
+            "mandi_name": "Incomplete Mandi",
+            "district": "Hooghly",
+            # missing required crop, modal_price, min_price, max_price, date
+        })
 
 
 def test_llm_recommendation_valid():
