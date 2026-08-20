@@ -3,7 +3,6 @@ MandiPulse AI — Pydantic Data Models
 Core data contracts between the webcmd agent, Gemini LLM, and the frontend.
 """
 
-from datetime import date
 from typing import Optional
 from pydantic import BaseModel, Field
 
@@ -36,9 +35,9 @@ class LLMRecommendation(BaseModel):
 
 class QueryRequest(BaseModel):
     """Incoming query from the frontend."""
-    crop: str = Field(..., example="Paddy")
-    district: str = Field(..., example="Hooghly")
-    state: str = Field(default="West Bengal", example="West Bengal")
+    crop: str = Field(..., json_schema_extra={"example": "Paddy"})
+    district: str = Field(..., json_schema_extra={"example": "Hooghly"})
+    state: str = Field(default="West Bengal", json_schema_extra={"example": "West Bengal"})
 
 
 class ApprovalRequest(BaseModel):

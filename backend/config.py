@@ -1,9 +1,9 @@
 """
 MandiPulse AI — Configuration
-Loads environment variables from .env file.
+Loads environment variables from .env file using Pydantic Settings v2.
 """
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -23,9 +23,11 @@ class Settings(BaseSettings):
     AGENT_TIMEOUT_SECONDS: int = 60
     CACHE_TTL_HOURS: int = 24
 
-    class Config:
-        env_file = "../.env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(
+        env_file="../.env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
 settings = Settings()
