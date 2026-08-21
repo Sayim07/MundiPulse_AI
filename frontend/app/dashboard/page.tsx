@@ -13,6 +13,7 @@ import StatsCards from "../components/StatsCards";
 import ApprovalModal from "../components/ApprovalModal";
 import DispatchToast from "../components/DispatchToast";
 import MarketMap from "../components/MarketMap";
+import { FluidParticlesBackground } from "@/components/ui/fluid-particles-background";
 import { Shield, Cpu, Zap, ShieldCheck } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -233,7 +234,10 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-x-hidden">
       <CustomCursor />
 
-      {/* Solid Executive Ambient Radial Glows (No background video on dashboard) */}
+      {/* Atmospheric Fluid Particles Background */}
+      <FluidParticlesBackground className="fixed inset-0 pointer-events-none z-0 min-h-screen" particleCount={900} />
+
+      {/* Solid Executive Ambient Radial Glows */}
       <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(16,185,129,0.14),transparent_70%)] z-0" />
       <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_60%_50%_at_90%_80%,rgba(34,211,238,0.06),transparent_60%)] z-0" />
 
