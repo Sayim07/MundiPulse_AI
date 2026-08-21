@@ -11,13 +11,17 @@ Provides endpoints for:
 import asyncio
 import json
 import uuid
+import os
+import sys
 from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+
+# Ensure backend directory is in sys.path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import settings
 from models.price_record import PriceRecord, LLMRecommendation, QueryRequest, ApprovalRequest
