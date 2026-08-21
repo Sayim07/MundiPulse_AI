@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Wheat, MapPin, Building2, Sparkles, ChevronRight, X } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "https://krishidrishti-ai-jtp6.onrender.com";
 
 export interface CatalogPick {
   crop: string;

@@ -16,7 +16,8 @@ import MarketMap from "../components/MarketMap";
 import { FluidParticlesBackground } from "@/components/ui/fluid-particles-background";
 import { ShieldCheck } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "https://krishidrishti-ai-jtp6.onrender.com";
 
 interface Recommendation {
   best_mandi: string;
