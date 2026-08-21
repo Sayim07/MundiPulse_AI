@@ -62,7 +62,6 @@ export default function CustomCursor() {
 
   return (
     <>
-      {/* Main glowing dot */}
       <motion.div
         className="fixed top-0 left-0 pointer-events-none z-[9999]"
         style={{
@@ -72,58 +71,23 @@ export default function CustomCursor() {
           translateY: "-50%",
         }}
         animate={{
-          width: isHovering ? 40 : 12,
-          height: isHovering ? 40 : 12,
+          width: isHovering ? 64 : 24,
+          height: isHovering ? 64 : 24,
           opacity: isVisible ? 1 : 0,
         }}
         transition={{
-          width: { type: "spring", damping: 20, stiffness: 400 },
-          height: { type: "spring", damping: 20, stiffness: 400 },
-          opacity: { duration: 0.15 },
-        }}
-      >
-        <div
-          className="w-full h-full rounded-full"
-          style={{
-            background: isHovering
-              ? "rgba(0, 255, 136, 0.15)"
-              : "rgba(0, 255, 136, 0.9)",
-            border: isHovering
-              ? "1.5px solid rgba(0, 255, 136, 0.6)"
-              : "none",
-            boxShadow: isHovering
-              ? "0 0 20px rgba(0, 255, 136, 0.3), 0 0 60px rgba(0, 255, 136, 0.1)"
-              : "0 0 8px rgba(0, 255, 136, 0.6), 0 0 20px rgba(0, 255, 136, 0.2)",
-          }}
-        />
-      </motion.div>
-
-      {/* Trailing glow ring */}
-      <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[9998]"
-        style={{
-          x: smoothX,
-          y: smoothY,
-          translateX: "-50%",
-          translateY: "-50%",
-        }}
-        animate={{
-          width: isHovering ? 56 : 28,
-          height: isHovering ? 56 : 28,
-          opacity: isVisible ? 0.4 : 0,
-        }}
-        transition={{
-          type: "spring",
-          damping: 30,
-          stiffness: 200,
+          width: { type: "spring", damping: 25, stiffness: 300 },
+          height: { type: "spring", damping: 25, stiffness: 300 },
           opacity: { duration: 0.2 },
         }}
       >
         <div
-          className="w-full h-full rounded-full"
+          className="w-full h-full rounded-full blur-[2px]"
           style={{
-            border: "1px solid rgba(0, 255, 136, 0.2)",
-            background: "transparent",
+            background: isHovering
+              ? "radial-gradient(circle, rgba(251, 191, 36, 0.8) 0%, rgba(251, 191, 36, 0) 70%)"
+              : "radial-gradient(circle, rgba(34, 211, 238, 0.6) 0%, rgba(34, 211, 238, 0) 70%)",
+            transition: "background 0.3s ease",
           }}
         />
       </motion.div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Terminal as TerminalIcon, Circle } from "lucide-react";
+import { Activity, Circle } from "lucide-react";
 
 export interface TerminalLog {
   type: "system" | "agent" | "success" | "llm" | "error";
@@ -14,18 +14,6 @@ interface AgentTerminalProps {
   isRunning: boolean;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  system: "terminal-line-system",
-  agent: "terminal-line-agent",
-  success: "terminal-line-success",
-  llm: "terminal-line-llm",
-  error: "terminal-line-error",
-};
-
-/**
- * AgentTerminal — Live terminal window that simulates the webcmd backend logs.
- * Auto-scrolls to latest log. Animated line-by-line appearance.
- */
 export default function AgentTerminal({ logs, isRunning }: AgentTerminalProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -36,60 +24,56 @@ export default function AgentTerminal({ logs, isRunning }: AgentTerminalProps) {
   }, [logs]);
 
   return (
-    <div className="terminal h-full flex flex-col">
-      {/* Terminal Header */}
-      <div className="terminal-header">
-        <Circle className="w-2.5 h-2.5 fill-mp-red text-mp-red" />
-        <Circle className="w-2.5 h-2.5 fill-mp-amber text-mp-amber" />
-        <Circle className="w-2.5 h-2.5 fill-mp-emerald-500 text-mp-emerald-500" />
-        <div className="flex items-center gap-2 ml-3">
-          <TerminalIcon className="w-3.5 h-3.5 text-mp-text-muted" />
-          <span className="text-xs text-mp-text-muted font-medium">
-            MandiPulse Agent Terminal
+    <div className="h-full flex flex-col glass rounded-xl overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-mp-border bg-white/5">
+        <div className="flex items-center gap-2">
+          <Activity className="w-4 h-4 text-mp-emerald-500" />
+          <span className="text-sm text-mp-text-primary font-medium">
+            System Activity Log
           </span>
         </div>
         {isRunning && (
-          <div className="ml-auto flex items-center gap-1.5">
-            <div className="pulse-dot" />
-            <span className="text-[10px] text-mp-emerald-400 font-medium uppercase tracking-wider">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-mp-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-mp-emerald-500"></span>
+            </span>
+            <span className="text-xs text-mp-emerald-500 font-medium">
               Live
             </span>
           </div>
         )}
       </div>
 
-      {/* Terminal Body */}
-      <div ref={scrollRef} className="terminal-body flex-1">
+      {/* Body */}
+      <div ref={scrollRef} className="flex-1 p-4 overflow-y-auto space-y-3">
         {logs.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-mp-text-muted text-xs">
-            <span>Waiting for query... Terminal will show agent activity here.</span>
+          <div className="flex flex-col items-center justify-center h-full text-mp-text-muted text-sm gap-3">
+             <Circle className="w-8 h-8 text-mp-text-muted/30 stroke-1" />
+            <span>Waiting for query... Activity will appear here.</span>
           </div>
         ) : (
           <AnimatePresence>
             {logs.map((log, idx) => (
               <motion.div
                 key={idx}
-                className={`${TYPE_COLORS[log.type] || "terminal-line-agent"} leading-relaxed`}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.25, delay: 0.05 }}
+                className={`text-sm leading-relaxed ${
+                  log.type === "error" ? "text-mp-red" : "text-mp-text-secondary"
+                }`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                <span className="text-mp-text-muted/40 mr-2 select-none">
-                  {String(idx + 1).padStart(2, "0")}
-                </span>
-                {log.msg}
+                <div className="flex items-start gap-3">
+                  <span className="text-mp-text-muted/40 text-xs mt-0.5 select-none shrink-0 w-5">
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                  <span>{log.msg}</span>
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
-        )}
-
-        {/* Blinking cursor at end */}
-        {isRunning && (
-          <motion.span
-            className="inline-block w-2 h-4 bg-mp-emerald-neon/80 ml-6 mt-1"
-            animate={{ opacity: [1, 0] }}
-            transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse" }}
-          />
         )}
       </div>
     </div>

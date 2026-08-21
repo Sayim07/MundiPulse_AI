@@ -8,12 +8,12 @@
 
 /* ── Design Tokens ─────────────────────────────────────────────────────────── */
 :root {
-  /* Core Palette */
-  --mp-bg-deepest:     #0a0f1a;
-  --mp-bg-deep:        #0f172a;   /* slate-900 */
-  --mp-bg-card:        #1e293b;   /* slate-800 */
-  --mp-bg-elevated:    #334155;   /* slate-700 */
-  --mp-bg-hover:       #475569;   /* slate-600 */
+  /* Core Palette (Dark Frosty Glass) */
+  --mp-bg-deepest:     rgba(10, 15, 26, 0.3);
+  --mp-bg-deep:        rgba(15, 23, 42, 0.5);
+  --mp-bg-card:        rgba(30, 41, 59, 0.65);
+  --mp-bg-elevated:    rgba(51, 65, 85, 0.8);
+  --mp-bg-hover:       rgba(71, 85, 105, 0.9);
 
   /* Neon Emerald Accent System */
   --mp-emerald-50:     #ecfdf5;
@@ -21,10 +21,10 @@
   --mp-emerald-200:    #a7f3d0;
   --mp-emerald-300:    #6ee7b7;
   --mp-emerald-400:    #34d399;
-  --mp-emerald-500:    #10b981;
-  --mp-emerald-600:    #059669;
-  --mp-emerald-neon:   #00ff88;
-  --mp-emerald-glow:   rgba(0, 255, 136, 0.15);
+  --mp-emerald-500:    #22c55e;
+  --mp-emerald-600:    #16a34a;
+  --mp-emerald-neon:   #22c55e;
+  --mp-emerald-glow:   rgba(34, 197, 94, 0.1);
 
   /* Accent Complement */
   --mp-cyan-400:       #22d3ee;
@@ -37,18 +37,18 @@
   --mp-text-muted:     #64748b;   /* slate-500 */
 
   /* Borders */
-  --mp-border:         rgba(148, 163, 184, 0.12);
+  --mp-border:         rgba(255, 255, 255, 0.12);
   --mp-border-glow:    rgba(0, 255, 136, 0.25);
 
   /* Shadows */
   --mp-shadow-sm:      0 1px 2px rgba(0, 0, 0, 0.3);
   --mp-shadow-md:      0 4px 12px rgba(0, 0, 0, 0.4);
   --mp-shadow-lg:      0 8px 32px rgba(0, 0, 0, 0.5);
-  --mp-shadow-glow:    0 0 20px rgba(0, 255, 136, 0.15), 0 0 60px rgba(0, 255, 136, 0.05);
+  --mp-shadow-glow:    none;
 
   /* Typography */
   --mp-font-sans:      'Inter', system-ui, -apple-system, sans-serif;
-  --mp-font-mono:      'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --mp-font-mono:      'Inter', system-ui, -apple-system, sans-serif;
 
   /* Transitions */
   --mp-ease:           cubic-bezier(0.4, 0, 0.2, 1);
@@ -96,7 +96,7 @@
 
 /* ── Base Styles ───────────────────────────────────────────────────────────── */
 * {
-  cursor: none !important; /* Hide default cursor everywhere */
+  /* No custom cursor hiding globally */
 }
 
 html {
@@ -106,7 +106,7 @@ html {
 }
 
 body {
-  background: var(--mp-bg-deepest);
+  background: transparent;
   color: var(--mp-text-primary);
   font-family: var(--mp-font-sans);
   overflow-x: hidden;
@@ -146,14 +146,14 @@ body::before {
 
 /* ── Glassmorphism Utilities ───────────────────────────────────────────────── */
 .glass {
-  background: rgba(30, 41, 59, 0.6);
+  background: rgba(30, 41, 59, 0.5);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid var(--mp-border);
 }
 
 .glass-heavy {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(24px) saturate(200%);
   -webkit-backdrop-filter: blur(24px) saturate(200%);
   border: 1px solid var(--mp-border);
@@ -163,11 +163,11 @@ body::before {
   background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(32px) saturate(200%);
   -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid rgba(0, 255, 136, 0.15);
+  border: 1px solid rgba(0, 255, 136, 0.2);
   box-shadow:
-    0 0 0 1px rgba(0, 255, 136, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 80px rgba(0, 255, 136, 0.08);
+    0 0 0 1px rgba(0, 255, 136, 0.1),
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(0, 255, 136, 0.15);
 }
 
 /* ── Glow Effects ──────────────────────────────────────────────────────────── */
@@ -192,7 +192,7 @@ body::before {
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(0, 255, 136, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s var(--mp-ease);
   overflow: hidden;
 }
@@ -207,9 +207,9 @@ body::before {
 }
 
 .btn-neon:hover {
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), 0 0 60px rgba(0, 255, 136, 0.1);
   transform: translateY(-1px);
-  border-color: var(--mp-emerald-neon);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: var(--mp-shadow-md);
 }
 
 .btn-neon:hover::before {
@@ -223,6 +223,8 @@ body::before {
 /* ── Card Styles ───────────────────────────────────────────────────────────── */
 .bento-card {
   background: var(--mp-bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--mp-border);
   border-radius: 1rem;
   padding: 1.5rem;

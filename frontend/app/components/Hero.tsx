@@ -30,16 +30,6 @@ export default function Hero() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-mp-emerald-neon/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto text-center">
-        {/* Badge */}
-        <motion.div
-          className="inline-flex items-center gap-2 badge-emerald mb-6"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="pulse-dot" />
-          <span>SLAB Hackathon & AgentForge 2026</span>
-        </motion.div>
 
         {/* Main Title */}
         <motion.div

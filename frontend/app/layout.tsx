@@ -31,13 +31,32 @@ export const metadata: Metadata = {
   authors: [{ name: "MandiPulse AI Team" }],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Global Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="fixed inset-0 w-full h-full object-cover z-[-1]"
+        >
+          <source src="/bg-video.mp4" type="video/mp4" />
+        </video>
+
+        {/* Global Dark overlay to ensure text is readable over the video */}
+        <div className="fixed inset-0 bg-black/40 z-[0] pointer-events-none" />
+        
+        {/* Page Content */}
+        <div className="relative z-10 flex flex-col flex-1 min-h-screen">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
