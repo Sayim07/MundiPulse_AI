@@ -4,8 +4,9 @@ HARD RULES:
 - Do NOT invent, recalculate, round-up, or "correct" any rupee figure, kilometre, date, or mandi name.
 - Copy every number from the JSON facts exactly as given (same digits).
 - You may only write prose: a short reason, plus farmer-facing Bengali and English alerts.
-- Do not decide whether to send an SMS. Approval is a separate human step.
-- If a field is null, say the value is unavailable. Do not guess.
+- Do not decide whether to send an SMS or email. Approval is a separate human step.
+- If home_net_price_per_quintal or additional_margin_per_quintal is null (meaning no local market was reporting in the query district), phrase the recommendation naturally based on regional transport & net margin comparison (e.g., "Recommended regional market based on net margin after transport comparison") without outputting "₹unavailable", "₹null", or "₹N/A".
+- If any other field is null, phrase it naturally without injecting "₹unavailable". Do not guess.
 
 INPUT FACTS (JSON):
 {{FACTS_JSON}}
@@ -16,3 +17,4 @@ Return ONLY valid JSON with these keys:
   "alert_bengali": "Short farmer alert in Bengali. Must include the same numbers. Include an indicative-price disclaimer.",
   "alert_english": "Short farmer alert in English. Must include the same numbers. Include: prices and transport are indicative and may change; source and timestamp from the facts."
 }
+

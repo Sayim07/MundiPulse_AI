@@ -65,3 +65,31 @@ async def test_invalid_json_falls_back_to_template():
     rec = await explain_and_localize(FACTS, api_key="", _generate=lambda p: "not-json")
     assert rec.net_margin_per_quintal == 2095
     assert rec.alert_english  # template filled
+
+
+@pytest.mark.asyncio
+async def test_missing_home_price_formats_gracefully():
+    facts_no_home = {
+        "crop": "Potato",
+        "best_mandi": "Burdwan Mandi",
+        "home_mandi": None,
+        "modal_price_per_quintal": 1450,
+        "transport_cost_per_quintal": 80,
+        "distance_km": 45,
+        "net_price_per_quintal": 1370,
+        "home_net_price_per_quintal": None,
+        "additional_margin_per_quintal": None,
+        "source_portal": "Agmarknet",
+        "date": "2026-08-21",
+        "fetched_at": "2026-08-21T10:32:00+05:30",
+        "data_mode": "live",
+        "confidence": "high",
+        "confidence_score": 90,
+    }
+    rec = await explain_and_localize(facts_no_home, api_key="")
+    assert rec.net_margin_per_quintal == 1370
+    assert "₹unavailable" not in rec.alert_english
+    assert "₹unavailable" not in rec.reasoning_summary
+    assert "₹unavailable" not in rec.alert_bengali
+    assert "regional transport" in rec.reasoning_summary
+

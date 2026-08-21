@@ -53,11 +53,7 @@ async def test_query_pipeline():
 
 
 @pytest.mark.anyio
-async def test_approve_flow(monkeypatch):
-    async def fake_sms(numbers, body):
-        return {"ok": True, "provider": "fast2sms", "simulated": False, "recipients": numbers}
-
-    monkeypatch.setattr("main.dispatch_sms", fake_sms)
+async def test_approve_flow():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         payload = {"crop": "Potato", "district": "Hooghly", "state": "West Bengal", "mode": "demo"}
@@ -71,20 +67,19 @@ async def test_approve_flow(monkeypatch):
                 "run_id": run_id,
                 "approved": True,
                 "approved_by": "organizer_test",
-                "recipients": ["9876543210"],
+                "recipients": ["sayimmullick2005@gmail.com"],
             },
         )
         assert app_resp.status_code == 200
         app_data = app_resp.json()
-        assert app_data["status"] == "approved_and_dispatched"
-        assert app_data["dispatch"]["delivery_status"] == "sent"
-        assert "9876543210" in app_data["dispatch"]["recipient_group"]
+        assert app_data["status"] == "success"
 
         # 3. Check history
         hist_resp = await client.get("/api/history")
         assert hist_resp.status_code == 200
         history = hist_resp.json()["runs"]
         assert any(h["run_id"] == run_id and h["status"] == "approved" for h in history)
+
 
 
 @pytest.mark.anyio
@@ -136,7 +131,7 @@ async def test_no_dispatch_without_approve():
 
 
 @pytest.mark.anyio
-async def test_approve_requires_recipients():
+async def test_approve_valid_run():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         q_resp = await client.post(
@@ -146,9 +141,10 @@ async def test_approve_requires_recipients():
         run_id = q_resp.json()["run_id"]
         app_resp = await client.post(
             "/api/approve",
-            json={"run_id": run_id, "approved": True, "recipients": []},
+            json={"run_id": run_id, "approved": True, "recipients": ["sayimmullick2005@gmail.com"]},
         )
-        assert app_resp.status_code == 400
+        assert app_resp.status_code == 200
+        assert app_resp.json()["status"] == "success"
 
 
 @pytest.mark.anyio

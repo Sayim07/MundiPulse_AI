@@ -27,50 +27,64 @@ def load_prompt() -> str:
 
 def _fmt_money(value: Optional[float]) -> str:
     if value is None:
-        return "unavailable"
+        return "N/A"
     if float(value) == int(value):
         return str(int(value))
     return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
 def draft_alerts_from_facts(facts: dict) -> dict:
-    """Deterministic wording using Python numbers. Used when Gemini is down."""
+    """Deterministic wording using Python numbers. Used when Gemini is down or for fallbacks."""
     crop = facts.get("crop") or "Crop"
     best = facts.get("best_mandi") or "N/A"
-    home = facts.get("home_mandi") or "home mandi"
+    home = facts.get("home_mandi")
     modal = _fmt_money(facts.get("modal_price_per_quintal"))
     transport = _fmt_money(facts.get("transport_cost_per_quintal"))
     net = _fmt_money(facts.get("net_price_per_quintal"))
-    home_net = _fmt_money(facts.get("home_net_price_per_quintal"))
+    home_net_val = facts.get("home_net_price_per_quintal")
+    has_home_price = home_net_val is not None
     extra = facts.get("additional_margin_per_quintal")
-    extra_s = _fmt_money(extra)
     dist = facts.get("distance_km")
-    dist_s = "unavailable" if dist is None else str(dist)
-    source = facts.get("source_portal") or "unknown"
-    fetched = facts.get("fetched_at") or facts.get("date") or "unknown"
-    mode = facts.get("data_mode") or "demo"
+    dist_s = "regional distance" if dist is None else f"{dist} km"
+    source = facts.get("source_portal") or "Agmarknet"
+    fetched = facts.get("fetched_at") or facts.get("date") or "live stream"
+    mode = facts.get("data_mode") or "live"
 
-    if extra is not None and extra > 0:
+    if has_home_price and extra is not None and extra > 0:
+        extra_s = _fmt_money(extra)
+        home_net_s = _fmt_money(home_net_val)
+        home_label = home or "local market"
         reason = (
             f"{best} offers ₹{modal}/qtl (modal) with ₹{transport}/qtl estimated transport "
-            f"({dist_s} km), net ₹{net}/qtl. That is ₹{extra_s}/qtl more than {home} "
-            f"(net ₹{home_net}/qtl). Source: {source}. Fetched: {fetched}."
+            f"({dist_s}), net ₹{net}/qtl. That is ₹{extra_s}/qtl more than {home_label} "
+            f"(net ₹{home_net_s}/qtl). Source: {source}. Fetched: {fetched}."
         )
-        advantage_en = f"Estimated additional margin: ₹{extra_s}/quintal vs {home}."
-        advantage_bn = f"আনুমানিক অতিরিক্ত মার্জিন: {home} থেকে ₹{extra_s}/কুইন্টাল বেশি।"
-    else:
+        advantage_en = f"Estimated additional margin: ₹{extra_s}/quintal vs {home_label}."
+        advantage_bn = f"আনুমানিক অতিরিক্ত মার্জিন: {home_label} থেকে ₹{extra_s}/কুইন্টাল বেশি।"
+    elif has_home_price:
+        home_net_s = _fmt_money(home_net_val)
+        home_label = home or "local market"
         reason = (
-            f"{home} remains the best net option at ₹{home_net}/qtl after estimated transport. "
+            f"{home_label} remains the best net option at ₹{home_net_s}/qtl after estimated transport. "
             f"Recommended mandi: {best} at net ₹{net}/qtl. Source: {source}. Fetched: {fetched}."
         )
-        advantage_en = f"Local/home net ₹{home_net}/qtl is competitive after transport."
-        advantage_bn = f"পরিবহনের পর স্থানীয়/হোম নেট ₹{home_net}/কুইন্টাল প্রতিযোগিতামূলক।"
+        advantage_en = f"Local/home net ₹{home_net_s}/qtl is competitive after transport."
+        advantage_bn = f"পরিবহনের পর স্থানীয়/হোম নেট ₹{home_net_s}/কুইন্টাল প্রতিযোগিতামূলক।"
+    else:
+        # Local/home district price is missing or not returned by Agmarknet
+        reason = (
+            f"{best} is the top regional recommendation offering ₹{modal}/qtl with ₹{transport}/qtl "
+            f"estimated transport ({dist_s}), yielding a net realization of ₹{net}/qtl based on regional transport comparison. "
+            f"Source: {source}. Fetched: {fetched}."
+        )
+        advantage_en = "Recommended based on regional transport & net realization comparison."
+        advantage_bn = "আঞ্চলিক পরিবহন এবং নেট মূল্যের তুলনার ভিত্তিতে প্রস্তাবিত।"
 
     alert_english = (
         f"MandiPulse Alert — {crop}\n\n"
         f"Recommended mandi: {best}\n"
         f"Modal price: ₹{modal}/quintal\n"
-        f"Estimated transport: ₹{transport}/quintal ({dist_s} km)\n"
+        f"Estimated transport: ₹{transport}/quintal ({dist_s})\n"
         f"Net price: ₹{net}/quintal\n"
         f"{advantage_en}\n"
         f"Source: {source}\n"
@@ -82,7 +96,7 @@ def draft_alerts_from_facts(facts: dict) -> dict:
         f"MandiPulse সতর্কতা — {crop}\n\n"
         f"সুপারিশকৃত মণ্ডি: {best}\n"
         f"মডেল মূল্য: ₹{modal}/কুইন্টাল\n"
-        f"আনুমানিক পরিবহন: ₹{transport}/কুইন্টাল ({dist_s} কিমি)\n"
+        f"আনুমানিক পরিবহন: ₹{transport}/কুইন্টাল ({dist_s})\n"
         f"নেট মূল্য: ₹{net}/কুইন্টাল\n"
         f"{advantage_bn}\n"
         f"উৎস: {source}\n"

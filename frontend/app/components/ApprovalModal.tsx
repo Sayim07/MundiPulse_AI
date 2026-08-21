@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Shield,
+  ShieldCheck,
   XCircle,
   Send,
   AlertTriangle,
   Globe,
   Languages,
-  User,
+  Mail,
+  Lock,
+  FileCheck2,
+  CheckCircle2,
+  Award,
 } from "lucide-react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface Recommendation {
   best_mandi: string;
@@ -24,15 +26,10 @@ interface Recommendation {
   confidence: string;
 }
 
-interface SavedNumber {
-  mobile: string;
-  label: string;
-}
-
 interface ApprovalModalProps {
   isOpen: boolean;
   recommendation: Recommendation | null;
-  onApprove: (recipients: string[]) => void;
+  onApprove: (messageText: string) => void;
   onReject: () => void;
   isApproving: boolean;
   region?: string;
@@ -47,60 +44,12 @@ export default function ApprovalModal({
   region,
 }: ApprovalModalProps) {
   const [showBengali, setShowBengali] = useState(false);
-  const [saved, setSaved] = useState<SavedNumber[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [draft, setDraft] = useState("");
-  const [draftLabel, setDraftLabel] = useState("");
-  const [phoneError, setPhoneError] = useState("");
-
-  useEffect(() => {
-    if (!isOpen) return;
-    fetch(`${API_BASE}/api/recipients`)
-      .then((r) => r.json())
-      .then((data) => {
-        const items: SavedNumber[] = data.items || [];
-        setSaved(items);
-        setSelected(items.map((i) => i.mobile));
-      })
-      .catch(() => undefined);
-  }, [isOpen]);
 
   if (!recommendation) return null;
 
-  const addNumber = async () => {
-    setPhoneError("");
-    try {
-      const response = await fetch(`${API_BASE}/api/recipients`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobile: draft, label: draftLabel }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          typeof data.detail === "string" ? data.detail : "Could not save number"
-        );
-      }
-      const items: SavedNumber[] = data.items || [];
-      setSaved(items);
-      const added = data.item?.mobile;
-      if (added && !selected.includes(added)) {
-        setSelected([...selected, added]);
-      }
-      setDraft("");
-      setDraftLabel("");
-    } catch (err) {
-      setPhoneError(err instanceof Error ? err.message : "Invalid number");
-    }
-  };
-
-  const toggle = (mobile: string) => {
-    setSelected((prev) =>
-      prev.includes(mobile) ? prev.filter((n) => n !== mobile) : [...prev, mobile]
-    );
-  };
-
-  const canSend = selected.length > 0 && !isApproving;
+  const currentMessage = showBengali
+    ? recommendation.alert_bengali
+    : recommendation.alert_english;
 
   return (
     <AnimatePresence>
@@ -110,186 +59,192 @@ export default function ApprovalModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.25 }}
         >
           <motion.div
-            className="glass-modal rounded-3xl p-0 max-w-lg w-full mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            className="bg-slate-950/95 border border-emerald-500/40 backdrop-blur-2xl rounded-3xl p-0 max-w-xl w-full mx-4 overflow-hidden shadow-2xl shadow-emerald-950/70 max-h-[92vh] flex flex-col"
+            initial={{ opacity: 0, scale: 0.94, y: 25 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            exit={{ opacity: 0, scale: 0.94, y: 25 }}
+            transition={{ type: "spring", damping: 26, stiffness: 320 }}
           >
-            <div className="px-6 pt-6 pb-4">
-              <div className="flex items-center gap-3 mb-1">
-                <div className="p-2 rounded-xl bg-mp-amber/10">
-                  <Shield className="w-5 h-5 text-mp-amber" />
+            {/* Security Top Bar */}
+            <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900/90 to-slate-950 px-6 py-4 border-b border-emerald-500/25 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-mp-text-primary">
-                    Human-in-the-Loop Approval
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      ACTION REQUIRED
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      PROTOCOL: HITL-SEC-V4
+                    </span>
+                  </div>
+                  <h2 className="text-base font-extrabold text-slate-100 mt-0.5">
+                    Executive Arbitrage Dispatch Authorization
                   </h2>
-                  <p className="text-xs text-mp-text-muted">
-                    Sending to: <strong className="text-mp-emerald-400">Farmer Group {region || "Selected Region"}</strong> via SMS + WhatsApp
+                </div>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-400">
+                <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                <span>GovTech Gate</span>
+              </div>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 font-sans">
+              
+              {/* Region & Policy Notice */}
+              <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+                <FileCheck2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-slate-200">
+                    Jurisdiction: <span className="text-emerald-300">{region || "Regional Mandi Network"}</span>
+                  </p>
+                  <p className="text-slate-400 text-[11px] mt-0.5 leading-relaxed">
+                    Under the Responsible AI Framework, outward dissemination of price intelligence requires explicit sign-off by an authorized administrative officer.
                   </p>
                 </div>
               </div>
-            </div>
 
-            <div className="mx-6 mb-4 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-mp-amber/5 border border-mp-amber/15">
-              <AlertTriangle className="w-4 h-4 text-mp-amber flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-mp-amber/80 leading-relaxed">
-                <strong>Responsible AI Guardrail:</strong> Both SMS and WhatsApp
-                are sent only after you approve. Demo mode routes all messages
-                to the verified hackathon number for safety.
-              </p>
-            </div>
-
-            <div className="mx-6 mb-4 px-4 py-3 rounded-xl bg-mp-bg-deep/60 border border-mp-border">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-mp-text-muted">
-                  Best Mandi
-                </span>
-                <span
-                  className={`badge-${recommendation.confidence === "high" ? "emerald" : "amber"} text-[9px]`}
-                >
-                  {recommendation.confidence.toUpperCase()} CONFIDENCE
-                </span>
-              </div>
-              <p className="text-base font-bold text-mp-emerald-400 mb-1">
-                {recommendation.best_mandi}
-              </p>
-              <p className="text-xs text-mp-text-muted leading-relaxed">
-                {recommendation.reasoning_summary}
-              </p>
-            </div>
-
-            <div className="mx-6 mb-3 flex gap-2">
-              <button
-                onClick={() => setShowBengali(false)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  !showBengali
-                    ? "bg-mp-emerald-500/15 text-mp-emerald-400 border border-mp-emerald-500/30"
-                    : "text-mp-text-muted hover:text-mp-text-secondary"
-                }`}
-              >
-                <Globe className="w-3 h-3" />
-                English
-              </button>
-              <button
-                onClick={() => setShowBengali(true)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  showBengali
-                    ? "bg-mp-emerald-500/15 text-mp-emerald-400 border border-mp-emerald-500/30"
-                    : "text-mp-text-muted hover:text-mp-text-secondary"
-                }`}
-              >
-                <Languages className="w-3 h-3" />
-                বাংলা
-              </button>
-            </div>
-
-            <div className="mx-6 mb-5">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={showBengali ? "bn" : "en"}
-                  className="px-4 py-3 rounded-xl bg-mp-bg-deepest/80 border border-mp-border max-h-40 overflow-y-auto"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <pre className="text-xs text-mp-text-secondary whitespace-pre-wrap leading-relaxed font-[var(--mp-font-sans)]">
-                    {showBengali
-                      ? recommendation.alert_bengali
-                      : recommendation.alert_english}
-                  </pre>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <div className="mx-6 mb-5 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-mp-text-muted">
-                <User className="w-3.5 h-3.5" />
-                <span>Recipients (Indian 10-digit mobiles)</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="9876543210"
-                  className="flex-1 px-3 py-2 rounded-lg text-sm bg-mp-bg-deep border border-mp-border text-mp-text-primary"
-                />
-                <input
-                  value={draftLabel}
-                  onChange={(e) => setDraftLabel(e.target.value)}
-                  placeholder="Label"
-                  className="w-24 px-3 py-2 rounded-lg text-sm bg-mp-bg-deep border border-mp-border text-mp-text-primary"
-                />
-                <button
-                  type="button"
-                  onClick={addNumber}
-                  className="px-3 py-2 rounded-lg text-xs border border-mp-border text-mp-text-secondary hover:text-mp-emerald-400"
-                >
-                  Add
-                </button>
-              </div>
-              {phoneError && <p className="text-[11px] text-mp-amber">{phoneError}</p>}
-              <ul className="max-h-28 overflow-y-auto space-y-1">
-                {saved.map((row) => (
-                  <li key={row.mobile} className="flex items-center gap-2 text-xs">
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(row.mobile)}
-                      onChange={() => toggle(row.mobile)}
-                    />
-                    <span className="text-mp-text-primary">{row.mobile}</span>
-                    {row.label && (
-                      <span className="text-mp-text-muted">({row.label})</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              {saved.length === 0 && (
-                <p className="text-[11px] text-mp-text-muted">
-                  Add at least one number. Nothing is hardcoded.
+              {/* Recommendation Summary */}
+              <div className="p-4 rounded-xl bg-slate-900/90 border border-emerald-500/25 shadow-inner">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                    RECOMMENDED APMC MANDI
+                  </span>
+                  <span
+                    className={`text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                      recommendation.confidence === "high"
+                        ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40"
+                        : "bg-amber-950/80 text-amber-300 border border-amber-500/40"
+                    }`}
+                  >
+                    {recommendation.confidence.toUpperCase()} CONFIDENCE
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-2 mb-1.5">
+                  <p className="text-lg font-black text-emerald-300">
+                    {recommendation.best_mandi}
+                  </p>
+                  <span className="text-xs font-bold text-slate-300">
+                    (₹{recommendation.net_margin_per_quintal.toLocaleString()}/qtl net)
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {recommendation.reasoning_summary}
                 </p>
-              )}
+              </div>
+
+              {/* Target Recipient Card */}
+              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                        DESIGNATED OFFICER RECIPIENT
+                      </span>
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    </div>
+                    <p className="text-sm font-mono font-bold text-slate-100 truncate mt-0.5">
+                      sayimmullick2005@gmail.com
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 whitespace-nowrap">
+                  Web3Forms SSL
+                </span>
+              </div>
+
+              {/* Language Selection Tabs & Preview */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                    ADVISORY MESSAGE PAYLOAD
+                  </span>
+                  <div className="flex gap-1.5 bg-slate-900 p-1 rounded-lg border border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setShowBengali(false)}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                        !showBengali
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm"
+                          : "text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <Globe className="w-3 h-3" />
+                      English
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowBengali(true)}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
+                        showBengali
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm"
+                          : "text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      <Languages className="w-3 h-3" />
+                      বাংলা (Bengali)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/90 max-h-36 overflow-y-auto">
+                  <pre className="text-xs text-slate-200 whitespace-pre-wrap leading-relaxed font-sans">
+                    {currentMessage}
+                  </pre>
+                </div>
+              </div>
+
             </div>
 
-            <div className="flex gap-3 px-6 pb-6">
+            {/* Action Buttons Footer */}
+            <div className="p-6 pt-3 bg-slate-900/60 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
               <motion.button
                 onClick={onReject}
                 disabled={isApproving}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-mp-border text-sm font-medium text-mp-text-secondary hover:bg-mp-bg-elevated/50 hover:text-mp-red transition-all disabled:opacity-40"
+                className="order-2 sm:order-1 flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-slate-700 bg-slate-900/80 hover:bg-red-950/40 hover:border-red-500/40 text-slate-300 hover:text-red-300 text-xs font-bold transition-all disabled:opacity-40"
                 whileHover={!isApproving ? { scale: 1.01 } : {}}
                 whileTap={!isApproving ? { scale: 0.99 } : {}}
               >
                 <XCircle className="w-4 h-4" />
-                Reject
+                Reject Advisory
               </motion.button>
+
               <motion.button
-                onClick={() => onApprove(selected)}
-                disabled={!canSend}
-                className="flex-[2] btn-neon flex items-center justify-center gap-2 py-3 rounded-xl text-sm disabled:opacity-60"
-                whileHover={canSend ? { scale: 1.01 } : {}}
-                whileTap={canSend ? { scale: 0.99 } : {}}
+                onClick={() => onApprove(currentMessage)}
+                disabled={isApproving}
+                className="order-1 sm:order-2 flex-[2] bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-extrabold px-6 py-3.5 rounded-xl text-sm shadow-xl shadow-emerald-950/70 border border-emerald-400/40 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                whileHover={!isApproving ? { scale: 1.02, boxShadow: "0 0 30px rgba(16, 185, 129, 0.5)" } : {}}
+                whileTap={!isApproving ? { scale: 0.98 } : {}}
               >
                 {isApproving ? (
-                  <>
+                  <div className="flex items-center gap-2">
                     <div className="spinner" />
-                    <span>Sending...</span>
-                  </>
+                    <span>Authorizing & Dispatched...</span>
+                  </div>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Approve & Send SMS</span>
+                    <span>Authorize & Dispatch Email</span>
                   </>
                 )}
               </motion.button>
             </div>
+
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
+
+

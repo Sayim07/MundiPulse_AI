@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     TWILIO_FROM_NUMBER: str = ""
     TWILIO_WHATSAPP_FROM: str = ""
     FAST2SMS_API_KEY: str = ""
+    WEB3FORMS_ACCESS_KEY: str = ""
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [

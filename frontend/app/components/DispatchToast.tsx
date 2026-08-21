@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, X, MessageSquare, Phone } from "lucide-react";
+import { CheckCircle2, X, Mail, ShieldCheck } from "lucide-react";
 
 interface DispatchToastProps {
   isVisible: boolean;
@@ -9,7 +9,7 @@ interface DispatchToastProps {
     channel: string;
     recipient_group: string;
     demo_target?: string;
-    channels?: { sms?: string; whatsapp?: string };
+    channels?: { email?: string; sms?: string; whatsapp?: string };
     dispatched_at: string;
     delivery_status: string;
   } | null;
@@ -17,22 +17,20 @@ interface DispatchToastProps {
 }
 
 /**
- * DispatchToast — Success notification showing dual SMS + WhatsApp dispatch status.
+ * DispatchToast — Official Authorization & Dispatch Confirmation Toast
  */
 export default function DispatchToast({
   isVisible,
   dispatch,
   onClose,
 }: DispatchToastProps) {
-  const smsStatus = dispatch?.channels?.sms || "sent";
-  const waStatus = dispatch?.channels?.whatsapp;
-  const demoTarget = dispatch?.demo_target;
+  const emailStatus = dispatch?.channels?.email || "sent";
 
   return (
     <AnimatePresence>
       {isVisible && dispatch && (
         <motion.div
-          className="fixed bottom-6 right-6 z-[200] glass-modal rounded-2xl p-5 max-w-sm"
+          className="fixed bottom-6 right-6 z-[200] bg-slate-950/95 border border-emerald-500/40 backdrop-blur-2xl rounded-2xl p-5 max-w-sm shadow-2xl shadow-emerald-950/80"
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -40,46 +38,42 @@ export default function DispatchToast({
         >
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 text-mp-text-muted hover:text-mp-text-secondary transition-colors"
+            className="absolute top-3 right-3 text-slate-400 hover:text-slate-100 transition-colors p-1 rounded-lg hover:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
 
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-mp-emerald-500/15 flex-shrink-0">
-              <CheckCircle2 className="w-5 h-5 text-mp-emerald-neon" />
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex-shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-mp-emerald-400 mb-1">
-                Alert dispatched
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  DISPATCH CONFIRMED
+                </span>
+              </div>
+              <h4 className="text-sm font-bold text-slate-100 mb-1">
+                Executive Email Advisory Transmitted
               </h4>
-              <p className="text-xs text-mp-text-secondary mb-2">
-                Sent via <strong className="text-mp-text-primary">{dispatch.channel}</strong> to{" "}
-                <strong className="text-mp-text-primary">
-                  {demoTarget ? `+91${demoTarget}` : dispatch.recipient_group}
+              <p className="text-xs text-slate-300 mb-2">
+                Delivered to{" "}
+                <strong className="text-emerald-300 font-mono">
+                  {dispatch.recipient_group || "sayimmullick2005@gmail.com"}
                 </strong>
               </p>
               <div className="flex flex-wrap items-center gap-2">
-                {/* SMS status */}
-                <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                  smsStatus === "failed"
-                    ? "bg-mp-amber/15 text-mp-amber"
-                    : "bg-mp-emerald-500/15 text-mp-emerald-400"
+                <span className={`inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                  emailStatus.startsWith("failed")
+                    ? "bg-amber-950/80 text-amber-300 border border-amber-500/30"
+                    : "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40"
                 }`}>
-                  <Phone className="w-2.5 h-2.5" />
-                  SMS {smsStatus.toUpperCase()}
+                  <Mail className="w-3 h-3" />
+                  Web3Forms {emailStatus.startsWith("failed") ? "FAILED" : "DELIVERED"}
                 </span>
-                {/* WhatsApp status */}
-                {waStatus && (
-                  <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                    waStatus === "failed"
-                      ? "bg-mp-amber/15 text-mp-amber"
-                      : "bg-mp-emerald-500/15 text-mp-emerald-400"
-                  }`}>
-                    <MessageSquare className="w-2.5 h-2.5" />
-                    WhatsApp {waStatus.toUpperCase()}
-                  </span>
-                )}
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {new Date().toLocaleTimeString()}
+                </span>
               </div>
             </div>
           </div>
@@ -88,3 +82,4 @@ export default function DispatchToast({
     </AnimatePresence>
   );
 }
+

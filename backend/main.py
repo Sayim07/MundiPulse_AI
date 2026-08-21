@@ -28,7 +28,7 @@ from models.price_record import QueryRequest, ApprovalRequest
 from services.margin_calculator import calculate_margins, facts_for_llm
 from services.runtime_store import complete_pending, get_pending, list_history, put_pending
 from services.recipients_store import add_recipient, list_recipients, remove_recipient
-from services.sms_dispatcher import dispatch_sms, parse_recipients
+from services.sms_dispatcher import dispatch_email
 from services.sms_inbox import list_inbox, record_inbound
 
 app = FastAPI(
@@ -307,7 +307,7 @@ async def stream_query(req: QueryRequest):
 
 @app.post("/api/approve")
 async def approve_alert(req: ApprovalRequest):
-    """HITL gate. SMS is sent only after approve, to numbers the organizer entered."""
+    """HITL gate. Records approval state; actual email dispatch is handled client-side."""
     entry = get_pending(req.run_id)
     if entry is None:
         raise HTTPException(
@@ -318,37 +318,14 @@ async def approve_alert(req: ApprovalRequest):
         )
 
     if req.approved:
-        try:
-            numbers = parse_recipients(req.recipients)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc))
-
-        rec = entry.get("recommendation") or {}
-        preview_src = rec.get("alert_english") or ""
-        try:
-            send = await dispatch_sms(numbers, preview_src)
-        except Exception as exc:
-            raise HTTPException(status_code=502, detail=f"SMS send failed: {exc}")
-
         entry["status"] = "approved"
         entry["approved_at"] = _now()
         entry["approved_by"] = req.approved_by or "organizer"
-        entry["dispatch"] = {
-            "channel": send.get("provider"),
-            "recipient_group": ", ".join(numbers),
-            "recipients": numbers,
-            "demo_target": send.get("demo_target"),
-            "channels": send.get("channels") or {},
-            "message_preview": (preview_src[:100] + "...") if len(preview_src) > 100 else preview_src,
-            "dispatched_at": _now(),
-            "delivery_status": "sent",
-            "simulated": bool(send.get("simulated")),
-        }
         complete_pending(req.run_id, entry)
+        
         return {
-            "status": "approved_and_dispatched",
-            "run_id": req.run_id,
-            "dispatch": entry["dispatch"],
+            "status": "success",
+            "message": "Approval recorded successfully"
         }
 
     entry["status"] = "rejected"
