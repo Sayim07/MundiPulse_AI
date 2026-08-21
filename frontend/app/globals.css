@@ -65,6 +65,7 @@
   --color-foreground: var(--mp-text-primary);
   --font-sans: var(--mp-font-sans);
   --font-mono: var(--mp-font-mono);
+  --font-outfit: var(--font-outfit);
 
   /* Custom colors for utility classes */
   --color-mp-bg-deepest: var(--mp-bg-deepest);
