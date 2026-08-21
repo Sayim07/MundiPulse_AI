@@ -21,11 +21,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MandiPulse AI — Autonomous Agri-Arbitrage Agent",
+  title: "KrishiDrishti AI — Autonomous Agri-Arbitrage Agent",
   description:
     "Real-time mandi price intelligence for Indian smallholder farmers. Autonomous browser agent that navigates government portals, computes logistics-adjusted margins, and generates localized alerts.",
   keywords: [
-    "MandiPulse",
+    "KrishiDrishti",
+    "KrishiDrishti AI",
     "mandi prices",
     "e-NAM",
     "Agmarknet",
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
     "arbitrage",
     "AI agent",
   ],
-  authors: [{ name: "MandiPulse AI Team" }],
+  authors: [{ name: "KrishiDrishti AI Team" }],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

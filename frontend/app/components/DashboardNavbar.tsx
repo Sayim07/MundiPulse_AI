@@ -35,10 +35,10 @@ export default function DashboardNavbar({ isRunning }: DashboardNavbarProps) {
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-1.5 group">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-black shadow-lg shadow-emerald-950/50 group-hover:scale-105 transition-transform">
-                M
+                K
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-white font-black text-lg tracking-tight">MandiPulse</span>
+                <span className="text-white font-black text-lg tracking-tight">KrishiDrishti</span>
                 <span className="text-emerald-400 font-extrabold text-lg">AI</span>
               </div>
             </Link>
@@ -257,7 +257,7 @@ export default function DashboardNavbar({ isRunning }: DashboardNavbarProps) {
 
               {/* Drawer Footer */}
               <div className="pt-5 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                <span>MandiPulse AI Platform v2.4</span>
+                <span>KrishiDrishti AI Platform v2.4</span>
                 <span className="flex items-center gap-1 text-emerald-400 font-semibold">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   System Verified

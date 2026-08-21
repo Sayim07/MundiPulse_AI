@@ -50,7 +50,7 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white drop-shadow-2xl">
-            MandiPulse <span className="gradient-text">AI</span>
+            KrishiDrishti <span className="gradient-text">AI</span>
           </h1>
         </motion.div>
 

@@ -81,7 +81,7 @@ def draft_alerts_from_facts(facts: dict) -> dict:
         advantage_bn = "আঞ্চলিক পরিবহন এবং নেট মূল্যের তুলনার ভিত্তিতে প্রস্তাবিত।"
 
     alert_english = (
-        f"MandiPulse Alert — {crop}\n\n"
+        f"KrishiDrishti Alert — {crop}\n\n"
         f"Recommended mandi: {best}\n"
         f"Modal price: ₹{modal}/quintal\n"
         f"Estimated transport: ₹{transport}/quintal ({dist_s})\n"
@@ -93,7 +93,7 @@ def draft_alerts_from_facts(facts: dict) -> dict:
         f"Prices and transport costs are indicative and may change. Verify before sale."
     )
     alert_bengali = (
-        f"MandiPulse সতর্কতা — {crop}\n\n"
+        f"KrishiDrishti সতর্কতা — {crop}\n\n"
         f"সুপারিশকৃত মণ্ডি: {best}\n"
         f"মডেল মূল্য: ₹{modal}/কুইন্টাল\n"
         f"আনুমানিক পরিবহন: ₹{transport}/কুইন্টাল ({dist_s})\n"

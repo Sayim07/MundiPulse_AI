@@ -79,7 +79,7 @@ function formatOfficerLog(rawMsg: string, type: string): { formattedMsg: string;
   }
 
   // Fallback: clean up raw tag prefixes
-  const cleanMsg = rawMsg.replace(/^\[(MandiPulse|Gemini|Error|Agmarknet)\]\s*/i, "");
+  const cleanMsg = rawMsg.replace(/^\[(KrishiDrishti|MandiPulse|Gemini|Error|Agmarknet)\]\s*/i, "");
   return {
     formattedMsg: cleanMsg,
     category: "SYSTEM",

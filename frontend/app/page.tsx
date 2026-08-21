@@ -29,7 +29,7 @@ export default function LandingPage() {
       <nav className="relative z-20 px-6 py-6 md:px-12">
         <div className="max-w-7xl mx-auto flex items-center justify-between bg-slate-950/70 border border-emerald-500/30 backdrop-blur-xl px-6 py-3.5 rounded-2xl shadow-2xl shadow-emerald-950/40">
           <div className="text-white font-black text-xl sm:text-2xl tracking-wide flex items-center gap-1.5">
-            <span>MandiPulse</span>
+            <span>KrishiDrishti</span>
             <span className="text-emerald-400">AI</span>
             <span className="hidden sm:inline-block text-[10px] font-mono font-bold uppercase tracking-widest bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full ml-2">
               GovTech Platform
@@ -65,7 +65,7 @@ export default function LandingPage() {
             </div>
 
             <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight text-white drop-shadow-2xl mb-6">
-              MandiPulse <span className="gradient-text">AI</span>
+              KrishiDrishti <span className="gradient-text">AI</span>
             </h1>
 
             <p className="text-base sm:text-xl md:text-2xl text-slate-100 drop-shadow-md font-medium max-w-2xl mb-10 leading-relaxed">

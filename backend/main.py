@@ -32,7 +32,7 @@ from services.sms_dispatcher import dispatch_email
 from services.sms_inbox import list_inbox, record_inbound
 
 app = FastAPI(
-    title="MandiPulse AI",
+    title="KrishiDrishti AI",
     description="Autonomous Agri-Arbitrage Agent — Backend API",
     version="1.0.0",
 )
@@ -77,7 +77,7 @@ async def execute_pipeline(req: QueryRequest, log_callback) -> dict:
         await log_callback(
             {
                 "type": "system",
-                "msg": "[MandiPulse] Agmarknet has no live rows for this search. Not substituting demo snapshot.",
+                "msg": "[KrishiDrishti] Agmarknet has no live rows for this search. Not substituting demo snapshot.",
             }
         )
         data_mode = "live"
@@ -85,7 +85,7 @@ async def execute_pipeline(req: QueryRequest, log_callback) -> dict:
         await log_callback(
             {
                 "type": "system",
-                "msg": "[MandiPulse] Live fetch returned 0 valid rows. Falling back to labelled DEMO (not live portal data).",
+                "msg": "[KrishiDrishti] Live fetch returned 0 valid rows. Falling back to labelled DEMO (not live portal data).",
             }
         )
         records = await run_price_fetch(
@@ -106,7 +106,7 @@ async def execute_pipeline(req: QueryRequest, log_callback) -> dict:
         for r in records
     ]
 
-    await log_callback({"type": "system", "msg": "[MandiPulse] Calculating transport-adjusted nets in Python (Gemini will not compute money)."})
+    await log_callback({"type": "system", "msg": "[KrishiDrishti] Calculating transport-adjusted nets in Python (Gemini will not compute money)."})
     margin = calculate_margins(records, home_district=req.district)
     records = margin.records
 
@@ -118,11 +118,11 @@ async def execute_pipeline(req: QueryRequest, log_callback) -> dict:
         await log_callback(
             {
                 "type": "error",
-                "msg": f"[MandiPulse] Low confidence ({margin.confidence_score}). Flags: {', '.join(margin.flags) or 'none'}. Dispatch still blocked until approval.",
+                "msg": f"[KrishiDrishti] Low confidence ({margin.confidence_score}). Flags: {', '.join(margin.flags) or 'none'}. Dispatch still blocked until approval.",
             }
         )
 
-    await log_callback({"type": "system", "msg": "[MandiPulse] Sending structured facts to Gemini for Bengali/English wording only..."})
+    await log_callback({"type": "system", "msg": "[KrishiDrishti] Sending structured facts to Gemini for Bengali/English wording only..."})
     try:
         recommendation = await explain_and_localize(facts, api_key=settings.GEMINI_API_KEY)
         await log_callback({"type": "llm", "msg": "[Gemini] ✓ Wording ready (numbers copied from Python)."})
