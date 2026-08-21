@@ -179,7 +179,7 @@ export default function DashboardPage() {
             run_id: result.run_id,
             approved: true,
             approved_by: "organizer",
-            recipients: ["sayimmullick2005@gmail.com"],
+            recipients: ["sayimmullick2005@gmail.com", "prototracedev@gmail.com"],
           }),
         });
       } catch {
@@ -188,7 +188,7 @@ export default function DashboardPage() {
 
       setDispatchInfo({
         channel: "Web3Forms Email",
-        recipient_group: "sayimmullick2005@gmail.com",
+        recipient_group: "Transmitted to Official Registry (prototracedev@gmail.com) from Officer (sayimmullick2005@gmail.com)",
         dispatched_at: new Date().toISOString(),
         delivery_status: "sent",
         channels: { email: "sent" },
@@ -200,7 +200,7 @@ export default function DashboardPage() {
         ...prev,
         {
           type: "success",
-          msg: `[KrishiDrishti] ✓ Approved. Email alert dispatched to sayimmullick2005@gmail.com via Web3Forms.`,
+          msg: `[KrishiDrishti] ✓ Approved. Transmitted to Official Registry (prototracedev@gmail.com) from Officer (sayimmullick2005@gmail.com) via Web3Forms.`,
         },
       ]);
     } catch (error) {

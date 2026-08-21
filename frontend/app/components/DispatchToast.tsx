@@ -56,11 +56,9 @@ export default function DispatchToast({
               <h4 className="text-sm font-bold text-slate-100 mb-1">
                 Executive Email Advisory Transmitted
               </h4>
-              <p className="text-xs text-slate-300 mb-2">
-                Delivered to{" "}
-                <strong className="text-emerald-300 font-mono">
-                  {dispatch.recipient_group || "sayimmullick2005@gmail.com"}
-                </strong>
+              <p className="text-xs text-slate-300 mb-2 leading-relaxed font-mono">
+                {dispatch.recipient_group ||
+                  "Transmitted to Official Registry (prototracedev@gmail.com) from Officer (sayimmullick2005@gmail.com)"}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${

@@ -147,12 +147,15 @@ export default function ApprovalModal({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                        DESIGNATED OFFICER RECIPIENT
+                        OFFICIAL REGISTRY & OFFICER ROUTING
                       </span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     </div>
-                    <p className="text-sm font-mono font-bold text-slate-100 truncate mt-0.5">
-                      sayimmullick2005@gmail.com
+                    <p className="text-xs font-mono font-bold text-slate-100 truncate mt-0.5">
+                      To: <span className="text-emerald-300">prototracedev@gmail.com</span>
+                    </p>
+                    <p className="text-[11px] font-mono text-slate-400 truncate">
+                      From Officer: sayimmullick2005@gmail.com
                     </p>
                   </div>
                 </div>

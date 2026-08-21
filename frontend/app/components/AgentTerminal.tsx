@@ -55,9 +55,9 @@ function formatOfficerLog(rawMsg: string, type: string): { formattedMsg: string;
     };
   }
 
-  if (lower.includes("approved") || lower.includes("web3forms") || lower.includes("email alert dispatched")) {
+  if (lower.includes("approved") || lower.includes("web3forms") || lower.includes("email alert dispatched") || lower.includes("transmitted")) {
     return {
-      formattedMsg: "🚀 Email alert dispatched to authorized recipient (sayimmullick2005@gmail.com).",
+      formattedMsg: "🚀 Transmitted to Official Registry (prototracedev@gmail.com) from Officer (sayimmullick2005@gmail.com).",
       category: "DISPATCH",
     };
   }
