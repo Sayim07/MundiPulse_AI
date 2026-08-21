@@ -39,7 +39,7 @@ export default function Hero() {
         >
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-2">
             <span className="gradient-text">MandiPulse</span>{" "}
-            <span className="text-mp-text-primary">AI</span>
+            <span className="text-white drop-shadow-md">AI</span>
           </h1>
         </motion.div>
 
@@ -60,7 +60,7 @@ export default function Hero() {
                   <Icon className="w-5 h-5 text-mp-emerald-400 flex-shrink-0" />
                 );
               })()}
-              <span className="text-lg md:text-xl text-mp-text-secondary font-medium">
+              <span className="text-lg md:text-xl text-slate-100 drop-shadow-md font-medium">
                 {TITLES[currentIndex].text}
               </span>
             </motion.div>
@@ -69,7 +69,7 @@ export default function Hero() {
 
         {/* Description */}
         <motion.p
-          className="text-sm md:text-base text-mp-text-muted max-w-lg mx-auto"
+          className="text-sm md:text-base text-slate-200 drop-shadow-md font-medium max-w-lg mx-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.4 }}

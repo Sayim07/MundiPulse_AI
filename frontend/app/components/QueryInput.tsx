@@ -44,11 +44,11 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
                 id="crop-select"
                 value={crop}
                 onChange={(e) => setCrop(e.target.value)}
-                className="select-glow w-full pl-10 pr-10 py-3.5 rounded-xl text-sm bg-mp-bg-deep/80"
+                className="select-glow w-full pl-10 pr-10 py-3.5 rounded-xl text-sm bg-mp-bg-deep/80 text-white"
                 disabled={isLoading}
               >
                 {CROPS.map((c) => (
-                  <option key={c} value={c}>
+                  <option key={c} value={c} className="bg-slate-900 text-white">
                     {c}
                   </option>
                 ))}
@@ -62,11 +62,11 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
                 id="district-select"
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
-                className="select-glow w-full pl-10 pr-10 py-3.5 rounded-xl text-sm bg-mp-bg-deep/80"
+                className="select-glow w-full pl-10 pr-10 py-3.5 rounded-xl text-sm bg-mp-bg-deep/80 text-white"
                 disabled={isLoading}
               >
                 {DISTRICTS.map((d) => (
-                  <option key={d} value={d}>
+                  <option key={d} value={d} className="bg-slate-900 text-white">
                     {d}
                   </option>
                 ))}
@@ -97,7 +97,7 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
         </div>
 
         {/* Hint Text */}
-        <p className="text-center text-xs text-mp-text-muted mt-3">
+        <p className="text-center text-sm text-slate-200 drop-shadow-md font-medium mt-3">
           Select a crop and your home district — the agent will compare prices across nearby mandis
         </p>
       </form>
