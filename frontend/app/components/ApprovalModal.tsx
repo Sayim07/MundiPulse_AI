@@ -6,14 +6,12 @@ import {
   ShieldCheck,
   XCircle,
   Send,
-  AlertTriangle,
   Globe,
   Languages,
   Mail,
   Lock,
   FileCheck2,
   CheckCircle2,
-  Award,
 } from "lucide-react";
 
 interface Recommendation {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wheat, Sprout, TrendingUp, ShieldCheck, Sparkles } from "lucide-react";
+import { Wheat, Sprout, TrendingUp, ShieldCheck } from "lucide-react";
 
 const TITLES = [
   { text: "Autonomous APMC Arbitrage & Price Discovery", icon: TrendingUp },

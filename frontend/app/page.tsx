@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import CustomCursor from "./components/CustomCursor";
-import { ArrowRight, Bot, Globe, ShieldCheck, Sparkles, TrendingUp, Layers } from "lucide-react";
+import { ArrowRight, Globe, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
 
 export default function LandingPage() {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { TrendingUp, MapPin, Wheat, Award, Sparkles } from "lucide-react";
+import { TrendingUp, MapPin, Wheat, Award } from "lucide-react";
 
 interface Recommendation {
   best_mandi: string;

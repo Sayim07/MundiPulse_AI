@@ -41,8 +41,6 @@ export default function MultiStepLoader({
 
   useEffect(() => {
     if (!isLoading) {
-      setActiveStep(1);
-      setElapsedMs(0);
       return;
     }
 
@@ -60,7 +58,11 @@ export default function MultiStepLoader({
       }
     }, 100);
 
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      setActiveStep(1);
+      setElapsedMs(0);
+    };
   }, [isLoading]);
 
   if (!isLoading) return null;
@@ -119,7 +121,6 @@ export default function MultiStepLoader({
           {STEPS.map((step) => {
             const isCompleted = activeStep > step.id;
             const isCurrent = activeStep === step.id;
-            const isPending = activeStep < step.id;
             const Icon = step.icon;
 
             return (

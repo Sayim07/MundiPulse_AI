@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Wheat, MapPin, Building2, Check, Sparkles, ChevronRight, X } from "lucide-react";
+import { Search, Wheat, MapPin, Building2, Sparkles, ChevronRight, X } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -70,10 +70,8 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
 
   useEffect(() => {
     const q = cropDebounced.trim();
-    if (q.length < 2) {
-      setCropHits([]);
-      return;
-    }
+    if (q.length < 2) return;
+
     const ctrl = new AbortController();
     fetch(`${API_BASE}/api/catalog/commodities?q=${encodeURIComponent(q)}`, {
       signal: ctrl.signal,
@@ -97,10 +95,8 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
 
   useEffect(() => {
     const q = areaDebounced.trim();
-    if (q.length < 2) {
-      setAreaHits([]);
-      return;
-    }
+    if (q.length < 2) return;
+
     const ctrl = new AbortController();
     fetch(`${API_BASE}/api/catalog/districts?q=${encodeURIComponent(q)}`, {
       signal: ctrl.signal,
@@ -123,11 +119,8 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
   }, [areaDebounced]);
 
   useEffect(() => {
-    if (!areaPick) {
-      setMarkets([]);
-      setMarketPick(null);
-      return;
-    }
+    if (!areaPick) return;
+
     const ctrl = new AbortController();
     fetch(`${API_BASE}/api/catalog/markets?district_id=${areaPick.id}`, {
       signal: ctrl.signal,

@@ -7,10 +7,7 @@ import {
   Menu,
   X,
   ShieldCheck,
-  Globe,
-  Database,
   Cpu,
-  Mail,
   Home,
   LayoutDashboard,
   Radio,
@@ -19,8 +16,6 @@ import {
   Sparkles,
   Shield,
   Zap,
-  Lock,
-  Layers,
 } from "lucide-react";
 
 interface DashboardNavbarProps {
@@ -28,7 +23,7 @@ interface DashboardNavbarProps {
   isRunning?: boolean;
 }
 
-export default function DashboardNavbar({ dataMode = "live", isRunning }: DashboardNavbarProps) {
+export default function DashboardNavbar({ isRunning }: DashboardNavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

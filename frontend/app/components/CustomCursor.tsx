@@ -11,7 +11,6 @@ import { motion, useMotionValue, useSpring } from "framer-motion";
 export default function CustomCursor() {
   const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
@@ -23,9 +22,11 @@ export default function CustomCursor() {
   useEffect(() => {
     // Detect touch device
     const isTouch =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    setIsTouchDevice(isTouch);
-    if (isTouch) return;
+      typeof window !== "undefined" &&
+      ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+    if (isTouch) {
+      return;
+    }
 
     const handleMouseMove = (e: MouseEvent) => {
       cursorX.set(e.clientX);
@@ -57,8 +58,6 @@ export default function CustomCursor() {
       document.removeEventListener("mouseleave", handleMouseLeave);
     };
   }, [cursorX, cursorY, isVisible]);
-
-  if (isTouchDevice) return null;
 
   return (
     <>

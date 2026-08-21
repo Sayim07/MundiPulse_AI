@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Loader2, Sparkles, TrendingUp, MapPin, Database, Cpu, Bot } from "lucide-react";
+import { Loader2, Database, Cpu, Bot } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface DashboardSkeletonProps {

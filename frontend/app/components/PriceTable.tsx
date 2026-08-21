@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import {
   TrendingUp,
   MapPin,
-  ExternalLink,
   Sparkles,
   Award,
   ArrowUpRight,

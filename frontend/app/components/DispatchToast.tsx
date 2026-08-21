@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, X, Mail, ShieldCheck } from "lucide-react";
+import { CheckCircle2, X, Mail } from "lucide-react";
 
 interface DispatchToastProps {
   isVisible: boolean;

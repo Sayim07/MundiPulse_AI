@@ -14,7 +14,7 @@ import ApprovalModal from "../components/ApprovalModal";
 import DispatchToast from "../components/DispatchToast";
 import MarketMap from "../components/MarketMap";
 import { FluidParticlesBackground } from "@/components/ui/fluid-particles-background";
-import { Shield, Cpu, Zap, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -37,6 +37,14 @@ interface QueryResult {
   data_mode?: "live" | "demo";
 }
 
+interface DispatchInfo {
+  channel: string;
+  recipient_group: string;
+  dispatched_at: string;
+  delivery_status: string;
+  channels: { email: string };
+}
+
 export default function DashboardPage() {
   const [logs, setLogs] = useState<TerminalLog[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -48,7 +56,7 @@ export default function DashboardPage() {
   const [isApproving, setIsApproving] = useState(false);
 
   const [showToast, setShowToast] = useState(false);
-  const [dispatchInfo, setDispatchInfo] = useState<any>(null);
+  const [dispatchInfo, setDispatchInfo] = useState<DispatchInfo | null>(null);
 
   const handleQuery = useCallback(async (pick: CatalogPick) => {
     setIsRunning(true);

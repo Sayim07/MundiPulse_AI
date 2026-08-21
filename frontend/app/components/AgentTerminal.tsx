@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShieldCheck, Activity, Terminal as TerminalIcon, CheckCircle2, Clock, Truck, Bot, AlertTriangle, Send } from "lucide-react";
+import { ShieldCheck, Clock } from "lucide-react";
 
 export interface TerminalLog {
   type: "system" | "agent" | "success" | "llm" | "error";
