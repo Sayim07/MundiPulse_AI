@@ -1,8 +1,8 @@
 """
 MandiPulse AI — FastAPI Backend Entrypoint
 Provides endpoints for:
-  - /api/query          → Trigger webcmd agent price fetch + Gemini analysis
-  - /api/query/stream   → SSE stream of live agent terminal logs
+  - /api/query          → Trigger price fetch + Python margins + Gemini wording
+  - /api/query/stream   → SSE stream of real agent logs
   - /api/approve        → Human-in-the-loop approval gate
   - /api/history        → Past query run history
   - /api/health         → Health check
@@ -10,23 +10,26 @@ Provides endpoints for:
 
 import asyncio
 import json
-import uuid
 import os
 import sys
+import uuid
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-# Ensure backend directory is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from agent.webcmd_runner import run_price_fetch
 from config import settings
-from models.price_record import PriceRecord, LLMRecommendation, QueryRequest, ApprovalRequest
-from services.mock_agent import run_mock_agent
-from services.mock_gemini import generate_mock_recommendation
+from llm.gemini_client import explain_and_localize, recommendation_from_facts, draft_alerts_from_facts
+from models.price_record import QueryRequest, ApprovalRequest
+from services.margin_calculator import calculate_margins, facts_for_llm
+from services.runtime_store import complete_pending, get_pending, list_history, put_pending
+from services.recipients_store import add_recipient, list_recipients, remove_recipient
+from services.sms_dispatcher import dispatch_sms, parse_recipients
+from services.sms_inbox import list_inbox, record_inbound
 
 app = FastAPI(
     title="MandiPulse AI",
@@ -34,114 +37,263 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — allow the Next.js frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ── In-memory stores (replace with SQLite for persistence) ──────────────────
-pending_approvals: dict[str, dict] = {}
-query_history: list[dict] = []
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
-# ── Health ──────────────────────────────────────────────────────────────────
-@app.get("/api/health")
-async def health():
-    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}
-
-
-# ── Query: trigger agent + LLM pipeline ────────────────────────────────────
-@app.post("/api/query")
-async def run_query(req: QueryRequest):
+async def execute_pipeline(req: QueryRequest, log_callback) -> dict:
     """
-    Runs the full pipeline:
-    1. webcmd agent fetches prices from portals
-    2. Gemini computes best mandi recommendation
-    3. Returns recommendation with requires_approval=True
+    live fetch → validate (inside runner) → Python margins → Gemini wording.
+    Live zero-rows → labelled DEMO fallback. HITL still required.
     """
-    run_id = str(uuid.uuid4())[:8]
+    requested = (req.mode or "live").lower()
+    data_mode = requested
 
-    # Step 1: Mock webcmd agent scraping
-    price_records = await run_mock_agent(
+    records = await run_price_fetch(
         crop=req.crop,
         district=req.district,
         state=req.state,
+        mode=requested,
+        log_callback=log_callback,
+        commodity_id=req.commodity_id,
+        district_id=req.district_id,
+        state_id=req.state_id,
+        market_id=req.market_id,
+        market_name=req.market_name,
     )
 
-    # Step 2: Mock Gemini LLM analysis
-    recommendation = await generate_mock_recommendation(
-        price_records=price_records,
-        home_district=req.district,
+    catalog_live = bool(req.commodity_id and req.district_id)
+    if requested == "live" and not records and catalog_live:
+        await log_callback(
+            {
+                "type": "system",
+                "msg": "[MandiPulse] Agmarknet has no live rows for this search. Not substituting demo snapshot.",
+            }
+        )
+        data_mode = "live"
+    elif requested == "live" and not records and not catalog_live:
+        await log_callback(
+            {
+                "type": "system",
+                "msg": "[MandiPulse] Live fetch returned 0 valid rows. Falling back to labelled DEMO (not live portal data).",
+            }
+        )
+        records = await run_price_fetch(
+            crop=req.crop,
+            district=req.district,
+            state=req.state,
+            mode="demo",
+            log_callback=log_callback,
+        )
+        data_mode = "demo"
+    elif requested == "demo":
+        data_mode = "demo"
+    else:
+        data_mode = "live"
+
+    records = [
+        r.model_copy(update={"data_mode": data_mode})
+        for r in records
+    ]
+
+    await log_callback({"type": "system", "msg": "[MandiPulse] Calculating transport-adjusted nets in Python (Gemini will not compute money)."})
+    margin = calculate_margins(records, home_district=req.district)
+    records = margin.records
+
+    fetched_at = next((r.fetched_at for r in records if r.fetched_at), _now())
+    date = records[0].date if records else fetched_at[:10]
+    facts = facts_for_llm(margin, crop=req.crop, data_mode=data_mode, fetched_at=fetched_at, date=date)
+
+    if margin.confidence == "low":
+        await log_callback(
+            {
+                "type": "error",
+                "msg": f"[MandiPulse] Low confidence ({margin.confidence_score}). Flags: {', '.join(margin.flags) or 'none'}. Dispatch still blocked until approval.",
+            }
+        )
+
+    await log_callback({"type": "system", "msg": "[MandiPulse] Sending structured facts to Gemini for Bengali/English wording only..."})
+    try:
+        recommendation = await explain_and_localize(facts, api_key=settings.GEMINI_API_KEY)
+        await log_callback({"type": "llm", "msg": "[Gemini] ✓ Wording ready (numbers copied from Python)."})
+    except Exception as exc:
+        await log_callback({"type": "error", "msg": f"[Gemini] Failed ({exc}); using Python template draft with the same numbers."})
+        recommendation = recommendation_from_facts(facts, draft_alerts_from_facts(facts))
+
+    # Belt-and-suspenders: UI/SMS money must match Python
+    recommendation = recommendation.model_copy(
+        update={
+            "best_mandi": margin.best_mandi or "N/A",
+            "net_margin_per_quintal": float(margin.best_net_price_per_quintal or 0),
+            "home_mandi": margin.home_mandi,
+            "home_net_price_per_quintal": margin.home_net_price_per_quintal,
+            "additional_margin_per_quintal": margin.additional_margin_per_quintal,
+            "data_mode": data_mode,
+            "fetched_at": fetched_at,
+            "source_portal": margin.best_source_portal,
+            "confidence": margin.confidence,
+            "confidence_score": margin.confidence_score,
+            "requires_approval": True,
+        }
     )
 
-    # Step 3: Store as pending approval (HITL gate)
-    approval_payload = {
+    await log_callback(
+        {"type": "system", "msg": f"[MandiPulse] ⏸ Awaiting human approval before dispatch. data_mode={data_mode}"}
+    )
+
+    run_id = str(uuid.uuid4())[:8]
+    payload = {
         "run_id": run_id,
         "query": req.model_dump(),
-        "price_records": [p.model_dump() for p in price_records],
+        "price_records": [p.model_dump() for p in records],
         "recommendation": recommendation.model_dump(),
         "status": "pending_approval",
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": _now(),
+        "data_mode": data_mode,
     }
-    pending_approvals[run_id] = approval_payload
+    put_pending(run_id, payload)
+    return payload
 
-    return approval_payload
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "timestamp": _now()}
 
 
-# ── Stream: SSE endpoint for live agent terminal logs ──────────────────────
+@app.get("/api/catalog/commodities")
+async def catalog_commodities(q: str = "", limit: int = 30):
+    """Live Agmarknet commodity search — not a hardcoded crop list."""
+    from agent.agmarknet_live import HEADERS, get_filters, search_commodities
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=25.0, headers=HEADERS) as client:
+            filters = await get_filters(client)
+        items = search_commodities(filters, q, limit=min(limit, 50))
+        return {"source": "agmarknet", "items": items}
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Could not load live commodities: {exc}")
+
+
+@app.get("/api/catalog/districts")
+async def catalog_districts(q: str = "", limit: int = 30):
+    """Live Agmarknet district search — not a hardcoded area list."""
+    from agent.agmarknet_live import HEADERS, get_filters, search_districts
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=25.0, headers=HEADERS) as client:
+            filters = await get_filters(client)
+        items = search_districts(filters, q, limit=min(limit, 50))
+        return {"source": "agmarknet", "items": items}
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Could not load live districts: {exc}")
+
+
+@app.get("/api/catalog/markets")
+async def catalog_markets(district_id: int, q: str = "", limit: int = 40):
+    """Live Agmarknet APMC list for a district — not a hardcoded mandi list."""
+    from agent.agmarknet_live import HEADERS, get_filters, search_markets
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=25.0, headers=HEADERS) as client:
+            filters = await get_filters(client)
+        items = search_markets(filters, district_id, q, limit=min(limit, 80))
+        return {"source": "agmarknet", "items": items}
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Could not load live markets: {exc}")
+
+
+@app.get("/api/recipients")
+async def get_recipients():
+    return {"items": list_recipients()}
+
+
+@app.post("/api/recipients")
+async def post_recipient(payload: dict):
+    try:
+        entry = add_recipient(str(payload.get("mobile") or ""), str(payload.get("label") or ""))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {"item": entry, "items": list_recipients()}
+
+
+@app.delete("/api/recipients/{mobile}")
+async def delete_recipient(mobile: str):
+    try:
+        remove_recipient(mobile)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {"items": list_recipients()}
+
+
+@app.get("/api/inbox")
+async def get_inbox():
+    return {"items": list_inbox()}
+
+
+@app.post("/api/sms/inbound")
+async def sms_inbound(payload: dict):
+    """Twilio-style inbound webhook: From + Body."""
+    sender = str(payload.get("From") or payload.get("from") or payload.get("sender") or "")
+    body = str(payload.get("Body") or payload.get("body") or payload.get("message") or "")
+    if not sender and not body:
+        raise HTTPException(status_code=400, detail="Inbound SMS needs From/sender and Body/message.")
+    entry = record_inbound(sender=sender, body=body, provider=str(payload.get("provider") or "webhook"))
+    return {"ok": True, "item": entry}
+
+
+@app.post("/api/query")
+async def run_query(req: QueryRequest):
+    logs: list[dict] = []
+
+    async def collect(event: dict):
+        logs.append(event)
+
+    payload = await execute_pipeline(req, collect)
+    payload["logs"] = logs
+    return payload
+
+
 @app.post("/api/query/stream")
 async def stream_query(req: QueryRequest):
-    """
-    Server-Sent Events stream simulating live webcmd agent terminal output.
-    The frontend displays this in the Agent Terminal window.
-    """
+    """SSE: real runner/LLM log events, then a result payload."""
 
     async def event_generator():
-        logs = [
-            {"type": "system", "msg": f"[MandiPulse] Initializing agent for {req.crop} in {req.district}, {req.state}..."},
-            {"type": "agent", "msg": "[webcmd] Launching headless browser..."},
-            {"type": "agent", "msg": "[webcmd] Navigating to https://enam.gov.in/web/dashboard/trade-data..."},
-            {"type": "agent", "msg": f"[webcmd] Selecting State: {req.state}"},
-            {"type": "agent", "msg": f"[webcmd] Selecting District: {req.district}"},
-            {"type": "agent", "msg": f"[webcmd] Selecting Commodity: {req.crop}"},
-            {"type": "agent", "msg": "[webcmd] Clicking 'Search' button..."},
-            {"type": "agent", "msg": "[webcmd] Waiting for DOM to settle (2.3s)..."},
-            {"type": "success", "msg": "[webcmd] ✓ Price table extracted — 4 mandi records found"},
-            {"type": "agent", "msg": "[webcmd] Navigating to https://agmarknet.gov.in/..."},
-            {"type": "agent", "msg": "[webcmd] Cross-referencing Agmarknet prices..."},
-            {"type": "success", "msg": "[webcmd] ✓ Cross-reference complete — data validated"},
-            {"type": "system", "msg": "[MandiPulse] Sending structured data to Gemini 1.5 Flash..."},
-            {"type": "llm", "msg": "[Gemini] Analyzing price differentials across 4 mandis..."},
-            {"type": "llm", "msg": "[Gemini] Computing transport-adjusted net margins..."},
-            {"type": "llm", "msg": "[Gemini] Generating Bengali + English localized alert..."},
-            {"type": "success", "msg": "[Gemini] ✓ Recommendation ready — best mandi identified"},
-            {"type": "system", "msg": "[MandiPulse] ⏸ Awaiting human approval before dispatch..."},
-        ]
+        queue: asyncio.Queue = asyncio.Queue()
 
-        for i, log in enumerate(logs):
-            await asyncio.sleep(0.4 + (0.2 * (i % 3)))  # staggered timing
-            yield f"data: {json.dumps(log)}\n\n"
+        async def log_callback(event: dict):
+            await queue.put(event)
 
-        # Final event: send the actual data
-        price_records = await run_mock_agent(req.crop, req.district, req.state)
-        recommendation = await generate_mock_recommendation(price_records, req.district)
-        run_id = str(uuid.uuid4())[:8]
+        async def runner():
+            try:
+                result = await execute_pipeline(req, log_callback)
+                await queue.put({"type": "result", "payload": result})
+            except Exception as exc:
+                await queue.put({"type": "error", "msg": f"[MandiPulse] Pipeline failed: {exc}"})
+            finally:
+                await queue.put(None)
 
-        result = {
-            "run_id": run_id,
-            "query": req.model_dump(),
-            "price_records": [p.model_dump() for p in price_records],
-            "recommendation": recommendation.model_dump(),
-            "status": "pending_approval",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }
-        pending_approvals[run_id] = result
-
-        yield f"data: {json.dumps({'type': 'result', 'payload': result})}\n\n"
+        task = asyncio.create_task(runner())
+        try:
+            while True:
+                item = await queue.get()
+                if item is None:
+                    break
+                yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+        finally:
+            await task
 
     return StreamingResponse(
         event_generator(),
@@ -153,55 +305,64 @@ async def stream_query(req: QueryRequest):
     )
 
 
-# ── Approve: HITL gate ─────────────────────────────────────────────────────
 @app.post("/api/approve")
 async def approve_alert(req: ApprovalRequest):
-    """
-    Human-in-the-loop approval gate.
-    No SMS/WhatsApp dispatch is ever made without explicit approval.
-    """
-    if req.run_id not in pending_approvals:
-        raise HTTPException(status_code=404, detail="Run ID not found")
-
-    entry = pending_approvals[req.run_id]
+    """HITL gate. SMS is sent only after approve, to numbers the organizer entered."""
+    entry = get_pending(req.run_id)
+    if entry is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"Run ID '{req.run_id}' is not pending. Fetch prices again, then approve."
+            ),
+        )
 
     if req.approved:
+        try:
+            numbers = parse_recipients(req.recipients)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+        rec = entry.get("recommendation") or {}
+        preview_src = rec.get("alert_english") or ""
+        try:
+            send = await dispatch_sms(numbers, preview_src)
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=f"SMS send failed: {exc}")
+
         entry["status"] = "approved"
-        entry["approved_at"] = datetime.now(timezone.utc).isoformat()
+        entry["approved_at"] = _now()
         entry["approved_by"] = req.approved_by or "organizer"
-
-        # Simulate SMS dispatch
         entry["dispatch"] = {
-            "channel": "twilio_sms",
-            "recipient_group": "Farmer Group Alpha",
-            "message_preview": entry["recommendation"]["alert_english"][:100] + "...",
-            "dispatched_at": datetime.now(timezone.utc).isoformat(),
-            "delivery_status": "delivered",
+            "channel": send.get("provider"),
+            "recipient_group": ", ".join(numbers),
+            "recipients": numbers,
+            "demo_target": send.get("demo_target"),
+            "channels": send.get("channels") or {},
+            "message_preview": (preview_src[:100] + "...") if len(preview_src) > 100 else preview_src,
+            "dispatched_at": _now(),
+            "delivery_status": "sent",
+            "simulated": bool(send.get("simulated")),
         }
-
-        query_history.append(entry)
-        del pending_approvals[req.run_id]
-
+        complete_pending(req.run_id, entry)
         return {
             "status": "approved_and_dispatched",
             "run_id": req.run_id,
             "dispatch": entry["dispatch"],
         }
-    else:
-        entry["status"] = "rejected"
-        entry["rejected_at"] = datetime.now(timezone.utc).isoformat()
-        query_history.append(entry)
-        del pending_approvals[req.run_id]
 
-        return {"status": "rejected", "run_id": req.run_id}
+    entry["status"] = "rejected"
+    entry["rejected_at"] = _now()
+    complete_pending(req.run_id, entry)
+    return {"status": "rejected", "run_id": req.run_id}
 
 
-# ── History ─────────────────────────────────────────────────────────────────
 @app.get("/api/history")
 async def get_history():
-    return {"runs": query_history}
+    return {"runs": list_history()}
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

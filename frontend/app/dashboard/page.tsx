@@ -3,13 +3,14 @@
 import { useState, useCallback } from "react";
 import CustomCursor from "../components/CustomCursor";
 import Hero from "../components/Hero";
-import QueryInput from "../components/QueryInput";
+import QueryInput, { CatalogPick } from "../components/QueryInput";
 import AgentTerminal, { TerminalLog } from "../components/AgentTerminal";
 import PriceTable, { PriceRecord } from "../components/PriceTable";
 import StatsCards from "../components/StatsCards";
 import ApprovalModal from "../components/ApprovalModal";
 import DispatchToast from "../components/DispatchToast";
-import { Shield, ExternalLink, Cpu, Zap } from "lucide-react";
+import MarketMap from "../components/MarketMap";
+import { Shield, Cpu, Zap } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -29,9 +30,10 @@ interface QueryResult {
   price_records: PriceRecord[];
   recommendation: Recommendation;
   status: string;
+  data_mode?: "live" | "demo";
 }
 
-export default function Home() {
+export default function DashboardPage() {
   const [logs, setLogs] = useState<TerminalLog[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<QueryResult | null>(null);
@@ -43,18 +45,28 @@ export default function Home() {
   const [showToast, setShowToast] = useState(false);
   const [dispatchInfo, setDispatchInfo] = useState<any>(null);
 
-  const handleQuery = useCallback(async (crop: string, district: string) => {
+  const handleQuery = useCallback(async (pick: CatalogPick) => {
     setIsRunning(true);
     setLogs([]);
     setResult(null);
-    setCurrentCrop(crop);
+    setCurrentCrop(pick.crop);
     setShowToast(false);
 
     try {
       const response = await fetch(`${API_BASE}/api/query/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ crop, district, state: "West Bengal" }),
+        body: JSON.stringify({
+          crop: pick.crop,
+          district: pick.district,
+          state: pick.state,
+          mode: "live",
+          commodity_id: pick.commodity_id,
+          district_id: pick.district_id,
+          state_id: pick.state_id,
+          market_id: pick.market_id,
+          market_name: pick.market_name,
+        }),
       });
 
       if (!response.ok) throw new Error("Failed to start agent");
@@ -85,7 +97,9 @@ export default function Home() {
               } else {
                 setLogs((prev) => [...prev, data as TerminalLog]);
               }
-            } catch {}
+            } catch {
+              // Skip malformed JSON
+            }
           }
         }
       }
@@ -102,11 +116,15 @@ export default function Home() {
     }
   }, []);
 
-  const handleApprove = useCallback(async () => {
+  const handleApprove = useCallback(async (recipients: string[]) => {
     if (!result) return;
     setIsApproving(true);
 
     try {
+      if (!result.run_id) {
+        throw new Error("No run_id on this result. Run Fetch again before approving.");
+      }
+
       const response = await fetch(`${API_BASE}/api/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -114,19 +132,26 @@ export default function Home() {
           run_id: result.run_id,
           approved: true,
           approved_by: "organizer",
+          recipients,
         }),
       });
 
-      if (!response.ok) throw new Error("Approval failed");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail =
+          typeof (data as { detail?: unknown }).detail === "string"
+            ? (data as { detail: string }).detail
+            : `Approval failed (${response.status})`;
+        throw new Error(detail);
+      }
 
-      const data = await response.json();
       setDispatchInfo(data.dispatch);
       setShowModal(false);
       setShowToast(true);
 
       setLogs((prev) => [
         ...prev,
-        { type: "success", msg: "[MandiPulse] ✓ Alert approved and dispatched!" },
+        { type: "success", msg: `[MandiPulse] ✓ Approved. SMS requested for ${recipients.join(", ")}.` },
       ]);
     } catch (error) {
       setLogs((prev) => [
@@ -150,20 +175,36 @@ export default function Home() {
           approved: false,
         }),
       });
-    } catch {}
+    } catch {
+      // Silent rejection
+    }
 
     setShowModal(false);
     setLogs((prev) => [
       ...prev,
-      { type: "error", msg: "[MandiPulse] ✗ Alert rejected by organizer." },
+      { type: "error", msg: "[MandiPulse] ✗ Alert rejected by organizer. No message dispatched." },
     ]);
   }, [result]);
 
   return (
     <>
+      <CustomCursor />
+
       <main className="relative z-10 min-h-screen">
         <Hero />
         <QueryInput onSubmit={handleQuery} isLoading={isRunning} />
+
+        {result?.data_mode && (
+          <div className="max-w-7xl mx-auto px-6">
+            <span
+              className={`text-xs font-semibold tracking-wider ${
+                result.data_mode === "live" ? "text-mp-emerald-400" : "text-mp-amber"
+              }`}
+            >
+              {result.data_mode === "live" ? "● LIVE DATA" : "● DEMO DATA"}
+            </span>
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-6 py-8">
           <StatsCards
@@ -177,8 +218,12 @@ export default function Home() {
               <AgentTerminal logs={logs} isRunning={isRunning} />
             </div>
 
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 space-y-4">
               <PriceTable
+                records={result?.price_records || []}
+                bestMandi={result?.recommendation.best_mandi || ""}
+              />
+              <MarketMap
                 records={result?.price_records || []}
                 bestMandi={result?.recommendation.best_mandi || ""}
               />
@@ -196,11 +241,13 @@ export default function Home() {
                 </h3>
               </div>
               <p className="text-xs text-mp-text-muted leading-relaxed">
-                <strong className="text-mp-text-secondary">webcmd</strong> browser agent navigates e-NAM & Agmarknet portals →{" "}
-                <strong className="text-mp-text-secondary">Gemini 1.5 Flash</strong>{" "}
-                computes margins & translates to Bengali →{" "}
+                <strong className="text-mp-text-secondary">Agmarknet JSON</strong> live portal data →{" "}
+                <strong className="text-mp-text-secondary">Python</strong>{" "}
+                computes transport-adjusted margins →{" "}
+                <strong className="text-mp-text-secondary">Gemini</strong>{" "}
+                translates to Bengali →{" "}
                 <strong className="text-mp-text-secondary">HITL gate</strong>{" "}
-                before Twilio dispatch.
+                before dual SMS + WhatsApp dispatch.
               </p>
             </div>
 
@@ -256,7 +303,6 @@ export default function Home() {
               <span className="gradient-text font-bold">MandiPulse AI</span>
             </div>
             <div className="flex items-center gap-4 text-xs text-mp-text-muted">
-
               <span>100% Free & Open Source</span>
             </div>
           </div>
@@ -269,6 +315,7 @@ export default function Home() {
         onApprove={handleApprove}
         onReject={handleReject}
         isApproving={isApproving}
+        region={result?.query?.district}
       />
 
       <DispatchToast

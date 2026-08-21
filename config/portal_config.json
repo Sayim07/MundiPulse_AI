@@ -1,0 +1,32 @@
+{
+  "headless": true,
+  "timeout_ms": 25000,
+  "rate_limit_ms": 1500,
+  "cache_dir": "backend/agent/cache",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "freshness_hours": 24,
+  "portals": {
+    "enam": {
+      "enabled": true,
+      "display_name": "e-NAM",
+      "base_url": "https://enam.gov.in/web/dashboard/trade-data",
+      "selectors_module": "agent.selectors.enam_selectors",
+      "workflow": "price_search"
+    },
+    "agmarknet": {
+      "enabled": true,
+      "display_name": "Agmarknet",
+      "base_url": "https://agmarknet.gov.in/",
+      "selectors_module": "agent.selectors.agmarknet_selectors",
+      "workflow": "price_search"
+    },
+    "wb_apmc": {
+      "enabled": false,
+      "display_name": "West Bengal APMC",
+      "base_url": "",
+      "selectors_module": "",
+      "workflow": "price_search",
+      "notes": "Optional state portal. Enable only after a verified selector file is added."
+    }
+  }
+}

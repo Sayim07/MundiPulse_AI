@@ -1,0 +1,28 @@
+{
+  "note": "District headquarters coordinates for estimated transport only. Not a named mandi yard.",
+  "centroids": [
+    {"district": "Alipurduar", "state": "West Bengal", "lat": 26.491, "lon": 89.527},
+    {"district": "Bankura", "state": "West Bengal", "lat": 23.232, "lon": 87.071},
+    {"district": "Birbhum", "state": "West Bengal", "lat": 23.905, "lon": 87.532},
+    {"district": "Purba Bardhaman", "state": "West Bengal", "lat": 23.232, "lon": 87.861},
+    {"district": "Paschim Bardhaman", "state": "West Bengal", "lat": 23.673, "lon": 86.952},
+    {"district": "Coochbehar", "state": "West Bengal", "lat": 26.324, "lon": 89.456},
+    {"district": "Dakshin Dinajpur", "state": "West Bengal", "lat": 25.371, "lon": 88.753},
+    {"district": "Darjeeling", "state": "West Bengal", "lat": 27.036, "lon": 88.263},
+    {"district": "Hooghly", "state": "West Bengal", "lat": 22.891, "lon": 88.395},
+    {"district": "Howrah", "state": "West Bengal", "lat": 22.595, "lon": 88.264},
+    {"district": "Jalpaiguri", "state": "West Bengal", "lat": 26.517, "lon": 88.732},
+    {"district": "Jhargram", "state": "West Bengal", "lat": 22.454, "lon": 86.995},
+    {"district": "Kalimpong", "state": "West Bengal", "lat": 27.070, "lon": 88.475},
+    {"district": "Kolkata", "state": "West Bengal", "lat": 22.573, "lon": 88.364},
+    {"district": "Malda", "state": "West Bengal", "lat": 25.011, "lon": 88.143},
+    {"district": "Murshidabad", "state": "West Bengal", "lat": 24.176, "lon": 88.280},
+    {"district": "Nadia", "state": "West Bengal", "lat": 23.401, "lon": 88.501},
+    {"district": "North 24 Parganas", "state": "West Bengal", "lat": 22.724, "lon": 88.480},
+    {"district": "Paschim Medinipur", "state": "West Bengal", "lat": 22.425, "lon": 87.321},
+    {"district": "Purba Medinipur", "state": "West Bengal", "lat": 21.937, "lon": 87.776},
+    {"district": "Purulia", "state": "West Bengal", "lat": 23.332, "lon": 86.365},
+    {"district": "South 24 Parganas", "state": "West Bengal", "lat": 22.135, "lon": 88.401},
+    {"district": "Uttar Dinajpur", "state": "West Bengal", "lat": 25.984, "lon": 87.847}
+  ]
+}

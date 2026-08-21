@@ -22,6 +22,10 @@ export interface PriceRecord {
   source_portal: string;
   distance_km: number | null;
   transport_cost_per_quintal: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  maps_url?: string | null;
+  maps_embed_url?: string | null;
 }
 
 interface PriceTableProps {
@@ -75,6 +79,7 @@ export default function PriceTable({ records, bestMandi }: PriceTableProps) {
               <th>Transport</th>
               <th>Net Margin</th>
               <th>Source</th>
+              <th>Map</th>
             </tr>
           </thead>
           <tbody>
@@ -170,6 +175,21 @@ export default function PriceTable({ records, bestMandi }: PriceTableProps) {
                     >
                       {record.source_portal}
                     </span>
+                  </td>
+                  <td>
+                    {record.maps_url ? (
+                      <a
+                        href={record.maps_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] text-mp-cyan hover:underline"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Google
+                      </a>
+                    ) : (
+                      <span className="text-mp-text-muted">—</span>
+                    )}
                   </td>
                 </motion.tr>
               );

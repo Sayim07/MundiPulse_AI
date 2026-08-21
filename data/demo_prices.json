@@ -1,0 +1,56 @@
+{
+  "label": "DEMO snapshot — not live portal data",
+  "fetched_at": "2026-08-20T10:00:00+05:30",
+  "records": [
+    {
+      "crop": "Paddy",
+      "home_district": "Hooghly",
+      "rows": [
+        {"mandi_name": "Dhaniakhali Mandi", "district": "Hooghly", "modal": 2180, "min": 2050, "max": 2250, "source": "e-NAM"},
+        {"mandi_name": "Burdwan Mandi", "district": "Purba Bardhaman", "modal": 2320, "min": 2200, "max": 2400, "source": "e-NAM"},
+        {"mandi_name": "Memari Mandi", "district": "Purba Bardhaman", "modal": 2275, "min": 2150, "max": 2350, "source": "Agmarknet"},
+        {"mandi_name": "Krishnanagar Mandi", "district": "Nadia", "modal": 2210, "min": 2100, "max": 2300, "source": "e-NAM"}
+      ]
+    },
+    {
+      "crop": "Paddy",
+      "home_district": "Purba Bardhaman",
+      "rows": [
+        {"mandi_name": "Burdwan Mandi", "district": "Purba Bardhaman", "modal": 2320, "min": 2200, "max": 2400, "source": "e-NAM"},
+        {"mandi_name": "Memari Mandi", "district": "Purba Bardhaman", "modal": 2275, "min": 2150, "max": 2350, "source": "Agmarknet"},
+        {"mandi_name": "Dhaniakhali Mandi", "district": "Hooghly", "modal": 2180, "min": 2050, "max": 2250, "source": "e-NAM"},
+        {"mandi_name": "Katwa Mandi", "district": "Purba Bardhaman", "modal": 2290, "min": 2180, "max": 2380, "source": "e-NAM"}
+      ]
+    },
+    {
+      "crop": "Paddy",
+      "home_district": "Nadia",
+      "rows": [
+        {"mandi_name": "Krishnanagar Mandi", "district": "Nadia", "modal": 2210, "min": 2100, "max": 2300, "source": "e-NAM"},
+        {"mandi_name": "Ranaghat Mandi", "district": "Nadia", "modal": 2240, "min": 2130, "max": 2320, "source": "Agmarknet"},
+        {"mandi_name": "Burdwan Mandi", "district": "Purba Bardhaman", "modal": 2320, "min": 2200, "max": 2400, "source": "e-NAM"},
+        {"mandi_name": "Dhaniakhali Mandi", "district": "Hooghly", "modal": 2180, "min": 2050, "max": 2250, "source": "e-NAM"}
+      ]
+    },
+    {
+      "crop": "Potato",
+      "home_district": "Hooghly",
+      "rows": [
+        {"mandi_name": "Dhaniakhali Mandi", "district": "Hooghly", "modal": 1450, "min": 1350, "max": 1520, "source": "e-NAM"},
+        {"mandi_name": "Burdwan Mandi", "district": "Purba Bardhaman", "modal": 1580, "min": 1480, "max": 1650, "source": "e-NAM"},
+        {"mandi_name": "Memari Mandi", "district": "Purba Bardhaman", "modal": 1520, "min": 1420, "max": 1600, "source": "Agmarknet"},
+        {"mandi_name": "Krishnanagar Mandi", "district": "Nadia", "modal": 1490, "min": 1380, "max": 1560, "source": "e-NAM"}
+      ]
+    },
+    {
+      "crop": "Mustard",
+      "home_district": "Hooghly",
+      "rows": [
+        {"mandi_name": "Dhaniakhali Mandi", "district": "Hooghly", "modal": 5800, "min": 5600, "max": 5950, "source": "e-NAM"},
+        {"mandi_name": "Burdwan Mandi", "district": "Purba Bardhaman", "modal": 6100, "min": 5900, "max": 6250, "source": "Agmarknet"},
+        {"mandi_name": "Katwa Mandi", "district": "Purba Bardhaman", "modal": 6020, "min": 5850, "max": 6150, "source": "e-NAM"},
+        {"mandi_name": "Krishnanagar Mandi", "district": "Nadia", "modal": 5880, "min": 5700, "max": 6000, "source": "e-NAM"}
+      ]
+    }
+  ]
+}

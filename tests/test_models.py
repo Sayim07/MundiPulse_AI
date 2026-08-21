@@ -60,6 +60,7 @@ def test_query_request():
     assert req.crop == "Potato"
     assert req.district == "Hooghly"
     assert req.state == "West Bengal"
+    assert req.mode == "live"
 
 
 def test_approval_request():

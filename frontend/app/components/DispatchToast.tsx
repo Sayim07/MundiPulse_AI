@@ -1,13 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2, X, MessageSquare, Phone } from "lucide-react";
 
 interface DispatchToastProps {
   isVisible: boolean;
   dispatch: {
     channel: string;
     recipient_group: string;
+    demo_target?: string;
+    channels?: { sms?: string; whatsapp?: string };
     dispatched_at: string;
     delivery_status: string;
   } | null;
@@ -15,13 +17,17 @@ interface DispatchToastProps {
 }
 
 /**
- * DispatchToast — Success notification shown after SMS/WhatsApp dispatch.
+ * DispatchToast — Success notification showing dual SMS + WhatsApp dispatch status.
  */
 export default function DispatchToast({
   isVisible,
   dispatch,
   onClose,
 }: DispatchToastProps) {
+  const smsStatus = dispatch?.channels?.sms || "sent";
+  const waStatus = dispatch?.channels?.whatsapp;
+  const demoTarget = dispatch?.demo_target;
+
   return (
     <AnimatePresence>
       {isVisible && dispatch && (
@@ -45,19 +51,35 @@ export default function DispatchToast({
             </div>
             <div>
               <h4 className="text-sm font-bold text-mp-emerald-400 mb-1">
-                Alert Dispatched Successfully
+                Alert dispatched
               </h4>
               <p className="text-xs text-mp-text-secondary mb-2">
-                Message sent to{" "}
+                Sent via <strong className="text-mp-text-primary">{dispatch.channel}</strong> to{" "}
                 <strong className="text-mp-text-primary">
-                  {dispatch.recipient_group}
-                </strong>{" "}
-                via {dispatch.channel === "twilio_sms" ? "Twilio SMS" : "WhatsApp"}.
+                  {demoTarget ? `+91${demoTarget}` : dispatch.recipient_group}
+                </strong>
               </p>
-              <div className="flex items-center gap-2">
-                <span className="badge-emerald text-[9px]">
-                  {dispatch.delivery_status.toUpperCase()}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* SMS status */}
+                <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full ${
+                  smsStatus === "failed"
+                    ? "bg-mp-amber/15 text-mp-amber"
+                    : "bg-mp-emerald-500/15 text-mp-emerald-400"
+                }`}>
+                  <Phone className="w-2.5 h-2.5" />
+                  SMS {smsStatus.toUpperCase()}
                 </span>
+                {/* WhatsApp status */}
+                {waStatus && (
+                  <span className={`inline-flex items-center gap-1 text-[9px] font-semibold px-2 py-0.5 rounded-full ${
+                    waStatus === "failed"
+                      ? "bg-mp-amber/15 text-mp-amber"
+                      : "bg-mp-emerald-500/15 text-mp-emerald-400"
+                  }`}>
+                    <MessageSquare className="w-2.5 h-2.5" />
+                    WhatsApp {waStatus.toUpperCase()}
+                  </span>
+                )}
               </div>
             </div>
           </div>

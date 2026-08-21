@@ -3,7 +3,11 @@ MandiPulse AI — Configuration
 Loads environment variables from .env file using Pydantic Settings v2.
 """
 
+import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_ENV_PATH = os.path.join(_REPO_ROOT, ".env")
 
 
 class Settings(BaseSettings):
@@ -11,7 +15,11 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_API_KEY: str = ""
+    TWILIO_API_SECRET: str = ""
     TWILIO_FROM_NUMBER: str = ""
+    TWILIO_WHATSAPP_FROM: str = ""
+    FAST2SMS_API_KEY: str = ""
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [
@@ -24,7 +32,7 @@ class Settings(BaseSettings):
     CACHE_TTL_HOURS: int = 24
 
     model_config = SettingsConfigDict(
-        env_file="../.env",
+        env_file=(_ENV_PATH, ".env", "../.env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

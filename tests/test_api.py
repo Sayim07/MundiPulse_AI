@@ -33,7 +33,7 @@ async def test_health_check():
 async def test_query_pipeline():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        payload = {"crop": "Paddy", "district": "Hooghly", "state": "West Bengal"}
+        payload = {"crop": "Paddy", "district": "Hooghly", "state": "West Bengal", "mode": "demo"}
         response = await client.post("/api/query", json=payload)
         assert response.status_code == 200
         data = response.json()
@@ -41,27 +41,44 @@ async def test_query_pipeline():
         assert len(data["price_records"]) > 0
         assert data["recommendation"]["requires_approval"] is True
         assert data["status"] == "pending_approval"
+        assert data["data_mode"] == "demo"
+        assert "dispatch" not in data
+        # Python numbers on recommendation match table best row net
+        rec = data["recommendation"]
+        best = next(p for p in data["price_records"] if p["mandi_name"] == rec["best_mandi"])
+        table_net = best["modal_price_per_quintal"] - (best["transport_cost_per_quintal"] or 0)
+        assert rec["net_margin_per_quintal"] == pytest.approx(table_net)
+        assert rec["alert_english"]
+        assert rec["alert_bengali"]
 
 
 @pytest.mark.anyio
-async def test_approve_flow():
+async def test_approve_flow(monkeypatch):
+    async def fake_sms(numbers, body):
+        return {"ok": True, "provider": "fast2sms", "simulated": False, "recipients": numbers}
+
+    monkeypatch.setattr("main.dispatch_sms", fake_sms)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        # 1. Trigger query
-        payload = {"crop": "Potato", "district": "Hooghly", "state": "West Bengal"}
+        payload = {"crop": "Potato", "district": "Hooghly", "state": "West Bengal", "mode": "demo"}
         q_resp = await client.post("/api/query", json=payload)
         assert q_resp.status_code == 200
         run_id = q_resp.json()["run_id"]
 
-        # 2. Approve
         app_resp = await client.post(
             "/api/approve",
-            json={"run_id": run_id, "approved": True, "approved_by": "organizer_test"},
+            json={
+                "run_id": run_id,
+                "approved": True,
+                "approved_by": "organizer_test",
+                "recipients": ["9876543210"],
+            },
         )
         assert app_resp.status_code == 200
         app_data = app_resp.json()
         assert app_data["status"] == "approved_and_dispatched"
-        assert app_data["dispatch"]["delivery_status"] == "delivered"
+        assert app_data["dispatch"]["delivery_status"] == "sent"
+        assert "9876543210" in app_data["dispatch"]["recipient_group"]
 
         # 3. Check history
         hist_resp = await client.get("/api/history")
@@ -75,7 +92,7 @@ async def test_reject_flow():
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         # 1. Trigger query
-        payload = {"crop": "Mustard", "district": "Hooghly", "state": "West Bengal"}
+        payload = {"crop": "Mustard", "district": "Hooghly", "state": "West Bengal", "mode": "demo"}
         q_resp = await client.post("/api/query", json=payload)
         run_id = q_resp.json()["run_id"]
 
@@ -97,3 +114,57 @@ async def test_approve_nonexistent_run_id():
             json={"run_id": "invalid_id_9999", "approved": True},
         )
         assert app_resp.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_no_dispatch_without_approve():
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        q_resp = await client.post(
+            "/api/query",
+            json={"crop": "Paddy", "district": "Hooghly", "state": "West Bengal", "mode": "demo"},
+        )
+        run_id = q_resp.json()["run_id"]
+        hist = await client.get("/api/history")
+        assert all(h.get("run_id") != run_id for h in hist.json()["runs"])
+        # Missing run cannot dispatch
+        missing = await client.post(
+            "/api/approve",
+            json={"run_id": "never-approved", "approved": True},
+        )
+        assert missing.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_approve_requires_recipients():
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        q_resp = await client.post(
+            "/api/query",
+            json={"crop": "Paddy", "district": "Hooghly", "state": "West Bengal", "mode": "demo"},
+        )
+        run_id = q_resp.json()["run_id"]
+        app_resp = await client.post(
+            "/api/approve",
+            json={"run_id": run_id, "approved": True, "recipients": []},
+        )
+        assert app_resp.status_code == 400
+
+
+@pytest.mark.anyio
+async def test_query_stream_demo_labelled():
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        async with client.stream(
+            "POST",
+            "/api/query/stream",
+            json={"crop": "Paddy", "district": "Hooghly", "state": "West Bengal", "mode": "demo"},
+        ) as response:
+            assert response.status_code == 200
+            body = ""
+            async for chunk in response.aiter_text():
+                body += chunk
+    assert "DEMO" in body
+    assert '"type": "result"' in body or '"type":"result"' in body
+    assert "Gemini] Analyzing price differentials" not in body  # old hardcoded money-LLM script
+
