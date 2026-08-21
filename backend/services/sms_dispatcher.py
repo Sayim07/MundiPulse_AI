@@ -57,7 +57,7 @@ async def dispatch_email(body: str) -> dict[str, Any]:
             detail="WEB3FORMS_ACCESS_KEY is not configured in .env",
         )
 
-    print("[MundiPulse] Sending Email via Web3Forms")
+    print("[KrishiDrishti] Sending Email via Web3Forms")
     log.info("Web3Forms dispatch")
 
     async with httpx.AsyncClient(timeout=25.0) as client:
@@ -65,8 +65,8 @@ async def dispatch_email(body: str) -> dict[str, Any]:
             WEB3FORMS_URL,
             json={
                 "access_key": access_key,
-                "subject": "MandiPulse AI: High Price Alert",
-                "from_name": "MandiPulse Dispatcher",
+                "subject": "KrishiDrishti AI: High Price Alert",
+                "from_name": "KrishiDrishti Dispatcher",
                 "message": text,
             },
         )

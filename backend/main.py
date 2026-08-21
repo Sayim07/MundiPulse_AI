@@ -39,12 +39,24 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_origin_regex=r"https?://.*",
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/")
+@app.head("/")
+async def root():
+    return {
+        "status": "online",
+        "service": "KrishiDrishti AI API",
+        "docs": "/docs",
+        "timestamp": _now(),
+    }
+
 
 
 def _now() -> str:
@@ -281,7 +293,7 @@ async def stream_query(req: QueryRequest):
                 result = await execute_pipeline(req, log_callback)
                 await queue.put({"type": "result", "payload": result})
             except Exception as exc:
-                await queue.put({"type": "error", "msg": f"[MandiPulse] Pipeline failed: {exc}"})
+                await queue.put({"type": "error", "msg": f"[KrishiDrishti] Pipeline failed: {exc}"})
             finally:
                 await queue.put(None)
 

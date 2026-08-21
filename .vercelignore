@@ -1,0 +1,9 @@
+backend/
+venv/
+.venv/
+tests/
+data/
+docs/
+*.py
+requirements.txt
+pytest.ini
