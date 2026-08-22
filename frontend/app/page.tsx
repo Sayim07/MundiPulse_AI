@@ -10,20 +10,7 @@ export default function LandingPage() {
     <>
       <CustomCursor />
 
-      {/* Immersive Video Background (Exclusively for Landing Page) */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="/bg-video.mp4" type="video/mp4" />
-        </video>
-        {/* Soft Dark & Emerald Frosted Tint Overlay */}
-        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]" />
-      </div>
+
 
       {/* Minimalist Top Navigation */}
       <nav className="relative z-20 px-6 py-6 md:px-12">

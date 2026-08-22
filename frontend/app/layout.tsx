@@ -45,6 +45,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${inter.variable} ${jetbrainsMono.variable} ${outfit.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white">
+        {/* Global Video Background */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/bg-video.mp4" type="video/mp4" />
+          </video>
+          {/* Soft Dark & Emerald Frosted Tint Overlay */}
+          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[2px]" />
+        </div>
+
         <div className="relative z-10 flex flex-col flex-1 min-h-screen">
           {children}
         </div>
