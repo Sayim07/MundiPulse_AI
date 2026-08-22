@@ -15,7 +15,7 @@ import sys
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -26,9 +26,11 @@ from config import settings
 from llm.gemini_client import explain_and_localize, recommendation_from_facts, draft_alerts_from_facts
 from models.price_record import QueryRequest, ApprovalRequest
 from services.margin_calculator import calculate_margins, facts_for_llm
-from services.runtime_store import complete_pending, get_pending, list_history, put_pending
+from services.runtime_store import complete_pending, get_pending, get_run, list_history, put_pending
+from services.officer_auth import get_current_officer, login_officer, register_officer
+from services.officers_store import officer_address
 from services.recipients_store import add_recipient, list_recipients, remove_recipient
-from services.sms_dispatcher import dispatch_email
+from services.sms_dispatcher import send_sms
 from services.sms_inbox import list_inbox, record_inbound
 
 app = FastAPI(
@@ -227,27 +229,104 @@ async def catalog_markets(district_id: int, q: str = "", limit: int = 40):
         raise HTTPException(status_code=502, detail=f"Could not load live markets: {exc}")
 
 
+@app.post("/api/auth/register")
+async def auth_register(payload: dict):
+    try:
+        return register_officer(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/auth/login")
+async def auth_login(payload: dict):
+    try:
+        return login_officer(payload)
+    except ValueError as exc:
+        msg = str(exc)
+        status = 401 if msg == "Invalid email or password." else 400
+        raise HTTPException(status_code=status, detail=msg)
+
+
+@app.get("/api/auth/me")
+async def auth_me(officer: dict = Depends(get_current_officer)):
+    return {"officer": officer}
+
+
 @app.get("/api/recipients")
-async def get_recipients():
-    return {"items": list_recipients()}
+async def get_recipients(officer: dict = Depends(get_current_officer)):
+    return {
+        "items": list_recipients(
+            officer_email=str(officer.get("email") or ""),
+        )
+    }
 
 
 @app.post("/api/recipients")
-async def post_recipient(payload: dict):
+async def post_recipient(payload: dict, officer: dict = Depends(get_current_officer)):
     try:
-        entry = add_recipient(str(payload.get("mobile") or ""), str(payload.get("label") or ""))
+        entry = add_recipient(
+            str(payload.get("mobile") or ""),
+            str(payload.get("label") or ""),
+            crop=str(payload.get("crop") or ""),
+            officer_email=str(officer.get("email") or ""),
+            address=officer_address(officer),
+            district=str(officer.get("district") or officer_address(officer) or ""),
+            district_id=officer.get("district_id"),
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    return {"item": entry, "items": list_recipients()}
+    return {
+        "item": entry,
+        "items": list_recipients(
+            officer_email=str(officer.get("email") or ""),
+        ),
+    }
 
 
 @app.delete("/api/recipients/{mobile}")
-async def delete_recipient(mobile: str):
+async def delete_recipient(mobile: str, officer: dict = Depends(get_current_officer)):
     try:
-        remove_recipient(mobile)
+        remove_recipient(
+            mobile,
+            officer_email=str(officer.get("email") or ""),
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    return {"items": list_recipients()}
+    return {
+        "items": list_recipients(
+            officer_email=str(officer.get("email") or ""),
+        )
+    }
+
+
+@app.post("/api/sms/send")
+async def sms_send(payload: dict, officer: dict = Depends(get_current_officer)):
+    """HITL SMS: pending or approved run_id required. Does not replace email."""
+    run_id = str(payload.get("run_id") or "").strip()
+    if not run_id:
+        raise HTTPException(status_code=400, detail="run_id is required.")
+    entry = get_run(run_id)
+    if entry is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Run ID '{run_id}' is not pending or approved. Fetch prices, then send SMS from the HITL gate.",
+        )
+    status = str(entry.get("status") or "")
+    if status not in {"pending_approval", "approved"}:
+        raise HTTPException(
+            status_code=400,
+            detail="SMS can only be sent for a pending or approved price run.",
+        )
+    mobiles = payload.get("mobiles") or payload.get("recipients") or []
+    if not isinstance(mobiles, list):
+        raise HTTPException(status_code=400, detail="mobiles must be a list of Indian numbers.")
+    try:
+        result = await send_sms(mobiles, str(payload.get("message") or ""))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    result["run_id"] = run_id
+    result["officer"] = officer.get("email")
+    return result
 
 
 @app.get("/api/inbox")

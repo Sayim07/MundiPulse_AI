@@ -50,13 +50,14 @@ KrishiDrishti closes that gap by:
 
 | Surface | Behaviour |
 |---|---|
-| **Landing (`/`)** | Full-viewport video hero; “Launch Dashboard”. |
-| **Dashboard (`/dashboard`)** | Live commodity / district / market search against Agmarknet, SSE agent terminal, price matrix, stats, map, HITL modal. |
+| **Landing (`/`)** | Public. “Launch Dashboard” goes to officer login. |
+| **Officer login** | `/officer/login` sits between landing and dashboard. Register is name + email + password + free-text address (no Agmarknet catalog pick). |
+| **Dashboard (`/dashboard`)** | After login: live crop/district search, SSE terminal, prices, map, farmer registry, HITL email + SMS. Unauthenticated visits redirect to login. |
 | **Live vs demo** | Default query mode is `live`. If live returns no rows **and** the officer did not pick catalog IDs, the runner falls back to labelled **DEMO** seed prices. Catalog searches with IDs that return zero rows stay live (no silent demo swap). |
 | **Margins** | Haversine distance from home district centroids / mandi master, `transport_rates.json` bands, net = modal − freight. |
 | **Gemini 2.0 Flash** | Explanation and translation only. Money fields are overwritten from Python before the UI/SMS copy is stored. If Gemini is down, a Python template draft is used with the same numbers. |
-| **HITL** | `POST /api/approve` records approval or rejection. Outbound **email** is sent from the dashboard via **Web3Forms** after the operator clicks Approve. |
-| **Twilio / Fast2SMS** | Present in settings and `.env.example` for a future SMS path. They are **not** the current dispatch channel. |
+| **HITL email** | Unchanged: Web3Forms from the dashboard after **Authorize & Dispatch Email**, then `POST /api/approve`. |
+| **HITL SMS** | In-app compose (not the device `sms:` app). Send via Fast2SMS or Twilio if keys are set; otherwise a clear 503. Email still works. |
 
 ---
 
@@ -66,6 +67,7 @@ KrishiDrishti closes that gap by:
 flowchart TD
     subgraph Client ["Frontend — Next.js 16 App Router"]
         LAND["Landing /"]
+        LOGIN["Officer login /officer/login"]
         DASH["Dashboard /dashboard"]
         CAT["QueryInput — live catalog search"]
         AT["Agent terminal — SSE"]
@@ -86,9 +88,11 @@ flowchart TD
         ENAM["e-NAM trade-data dashboard"]
         GEM["Gemini 2.0 Flash"]
         W3["Web3Forms email"]
+        SMS["Fast2SMS / Twilio"]
     end
 
-    LAND --> DASH
+    LAND --> LOGIN
+    LOGIN --> DASH
     CAT -->|GET /api/catalog/*| API
     DASH -->|POST /api/query/stream| API
     API --> RUN
@@ -103,12 +107,13 @@ flowchart TD
     PT --> MODAL
     MODAL -->|Web3Forms submit| W3
     MODAL -->|POST /api/approve| API
+    MODAL -->|POST /api/sms/send| SMS
 ```
 
 **Money vs language (hard split)**
 
 ```
-live / demo prices  →  Python nets, confidence, flags  →  Gemini wording  →  HITL  →  email
+live / demo prices  →  Python nets, confidence, flags  →  Gemini wording  →  HITL  →  email and/or SMS
                          (source of truth)                 (copy only)
 ```
 
@@ -158,7 +163,7 @@ sequenceDiagram
 | Prices | Agmarknet `dashboard-filters` / `dashboard-data` JSON | Live district-level averages; not a named yard table |
 | Geo / freight | `mandi_master.json`, `district_centroids.json`, `transport_rates.json` | Distance and ₹/km/quintal bands |
 | LLM | `google-genai`, model `gemini-2.0-flash` | Localize and explain Python facts |
-| Alerts | Web3Forms (dashboard) | Email after HITL; backend `dispatch_email` is the same provider if configured |
+| Alerts | Web3Forms (dashboard) + Fast2SMS/Twilio | Email after HITL; SMS compose uses Fast2SMS or Twilio when configured |
 | Tests | pytest, pytest-asyncio, httpx ASGI | API, margins, runner, Gemini fallback, SMS helpers |
 
 There is **no** `@agentrhq/webcmd` dependency. Cached paths under `backend/agent/cache/` are hints only; they are not trusted command scripts.
@@ -194,7 +199,9 @@ MundiPulse AI/
 │       ├── geocoder.py
 │       ├── runtime_store.py            # Pending runs + history
 │       ├── recipients_store.py
-│       ├── sms_dispatcher.py           # Web3Forms email helper
+│       ├── officers_store.py
+│       ├── officer_auth.py             # JWT + password hash (officer registry)
+│       ├── sms_dispatcher.py           # Web3Forms email helper + Fast2SMS/Twilio SMS
 │       ├── sms_inbox.py
 │       ├── mock_agent.py               # Demo-path helpers
 │       └── mock_gemini.py
@@ -202,6 +209,7 @@ MundiPulse AI/
 │   ├── app/
 │   │   ├── page.tsx                    # Landing
 │   │   ├── dashboard/page.tsx          # Operator console
+│   │   ├── officer/login + register    # Officer JWT session
 │   │   ├── layout.tsx                  # Inter, Outfit, JetBrains Mono
 │   │   ├── globals.css
 │   │   └── components/                 # Query, terminal, table, map, HITL, …
@@ -266,7 +274,7 @@ npm install
 npm run dev
 ```
 
-Dashboard: [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
+Landing: [http://localhost:3000](http://localhost:3000) — Launch Dashboard opens officer login. After login: [http://localhost:3000/dashboard](http://localhost:3000/dashboard).
 
 The UI calls `http://localhost:8000` unless you set `NEXT_PUBLIC_API_URL`. Put that in `frontend/.env.local` if the API is not on port 8000.
 
@@ -282,9 +290,12 @@ Root `.env` (loaded by `backend/config.py`):
 |---|---|---|
 | `GEMINI_API_KEY` | For Gemini copy | Wording/translation only |
 | `WEB3FORMS_ACCESS_KEY` | For backend email helper | Same provider as the dashboard approve path |
-| `TWILIO_*` / `FAST2SMS_API_KEY` | No (current path) | Reserved for SMS; HITL still required if wired later |
+| `TWILIO_*` / `FAST2SMS_API_KEY` | For SMS send | Fast2SMS preferred; else Twilio. HITL + officer JWT required. Email still works if SMS keys are missing |
 | `MANDIPULSE_PORTAL_CONFIG` | No | Override path to `portal_config.json` |
 | `MANDIPULSE_RUNTIME_STORE` | Tests only | Isolated HITL JSON; pytest sets this automatically |
+| `OFFICER_JWT_SECRET` | Yes in production | HS256 secret for officer sessions |
+| `MANDIPULSE_OFFICERS_STORE` | Tests only | Isolated `officers.json` path |
+| `MANDIPULSE_RECIPIENTS_STORE` | Tests only | Isolated `recipients.json` path |
 
 Never commit `.env`. Frontend public API base: `NEXT_PUBLIC_API_URL`.
 
@@ -366,17 +377,31 @@ Same body as `/api/query`. Events are `data: {json}\n\n`.
 - `approved: true` → `{ "status": "success", "message": "Approval recorded successfully" }`
 - `approved: false` → `{ "status": "rejected", "run_id": "…" }`
 
-The dashboard sends email via Web3Forms **before** this call. This endpoint persists HITL state; it does not send Twilio SMS.
+The dashboard sends email via Web3Forms **before** this call. This endpoint persists HITL state; it does not send SMS.
 
-### History and recipients
+### History, officer auth, recipients, SMS
+
+The **dashboard requires officer login**. Farmer mobiles are PII: list/add/delete and SMS send require a Bearer JWT. `GET /api/recipients` without a token returns **401**.
+
+**Officer auth (hackathon JWT + JSON store — not Firebase / Auth0 / NextAuth)**
+
+1. Register at `/officer/register` with **full name**, email, password (min 8), and a **typed address/location** (no Agmarknet catalog click). `district` is accepted as an alias for `address`.
+2. Login at `/officer/login`. JWT is stored in `localStorage` as `krishidrishti_officer_token` (7-day expiry; payload `sub`, `name`, `address`).
+3. Set `OFFICER_JWT_SECRET` in `.env` for any deployed backend.
 
 | Method | Path | Role |
 |---|---|---|
+| `POST` | `/api/auth/register` | `{ email, password, name, address }` → `{ token, officer }` |
+| `POST` | `/api/auth/login` | `{ email, password }` → `{ token, officer }` |
+| `GET` | `/api/auth/me` | Bearer token → current officer (no password hash) |
 | `GET` | `/api/history` | `{ "runs": [ … ] }` |
-| `GET` / `POST` | `/api/recipients` | List / add mobile (validation: Indian 10-digit) |
-| `DELETE` | `/api/recipients/{mobile}` | Remove |
+| `GET` / `POST` | `/api/recipients` | **Bearer required.** Mobile + optional label + crop/need, scoped to `officer_email` |
+| `DELETE` | `/api/recipients/{mobile}` | **Bearer required.** Remove only a farmer in that officer’s registry |
+| `POST` | `/api/sms/send` | **Bearer required.** `{ run_id, mobiles, message }` — pending or approved run. **503** if neither Fast2SMS nor Twilio is configured |
 | `GET` | `/api/inbox` | Inbound SMS log (if webhook used) |
 | `POST` | `/api/sms/inbound` | Twilio-style `{ From, Body }` webhook |
+
+Accounts live in `data/officers.json` (password hashes only). Farmer rows in `data/recipients.json` include `officer_email`, `address`, and `crop`. Unscoped legacy rows are hidden. Email HITL is unchanged; if an officer is logged in, `approved_by` / From Officer use their email.
 
 ---
 
@@ -427,9 +452,9 @@ Live portal tests need network; keep CI on `mode=demo` unless you explicitly run
 - [x] Python-only logistics margins + bilingual drafts (Gemini 2.0 Flash)
 - [x] Live Agmarknet catalog + dashboard-data fetch (Playwright-guarded)
 - [x] Labelled DEMO fallback and confidence flags
-- [x] Web3Forms email after approve
+- [x] Officer JWT registry + farmer contacts (crop/need); dashboard gated on login
+- [x] HITL SMS compose (Fast2SMS / Twilio) alongside Web3Forms email
 - [ ] Human-verified e-NAM table extract (selectors still placeholders)
-- [ ] Live SMS (Twilio or Fast2SMS) behind the same HITL gate
 - [ ] Voice / IVR for non-literate farmers
 - [ ] Historical 7-day commodity trend chart
 

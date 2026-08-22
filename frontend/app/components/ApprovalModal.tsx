@@ -12,6 +12,7 @@ import {
   Lock,
   FileCheck2,
   CheckCircle2,
+  MessageSquare,
 } from "lucide-react";
 
 interface Recommendation {
@@ -29,8 +30,10 @@ interface ApprovalModalProps {
   recommendation: Recommendation | null;
   onApprove: (messageText: string) => void;
   onReject: () => void;
+  onOpenSms?: () => void;
   isApproving: boolean;
   region?: string;
+  officerEmail?: string | null;
 }
 
 export default function ApprovalModal({
@@ -38,8 +41,10 @@ export default function ApprovalModal({
   recommendation,
   onApprove,
   onReject,
+  onOpenSms,
   isApproving,
   region,
+  officerEmail,
 }: ApprovalModalProps) {
   const [showBengali, setShowBengali] = useState(false);
 
@@ -155,7 +160,7 @@ export default function ApprovalModal({
                       To: <span className="text-emerald-300">prototracedev@gmail.com</span>
                     </p>
                     <p className="text-[11px] font-mono text-slate-400 truncate">
-                      From Officer: sayimmullick2005@gmail.com
+                      From Officer: {officerEmail || "sayimmullick2005@gmail.com"}
                     </p>
                   </div>
                 </div>
@@ -208,7 +213,8 @@ export default function ApprovalModal({
             </div>
 
             {/* Action Buttons Footer */}
-            <div className="p-6 pt-3 bg-slate-900/60 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
+            <div className="p-6 pt-3 bg-slate-900/60 border-t border-slate-800 flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
               <motion.button
                 onClick={onReject}
                 disabled={isApproving}
@@ -239,6 +245,18 @@ export default function ApprovalModal({
                   </>
                 )}
               </motion.button>
+              </div>
+              {onOpenSms ? (
+                <button
+                  type="button"
+                  onClick={onOpenSms}
+                  disabled={isApproving}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-cyan-500/40 bg-cyan-950/30 hover:bg-cyan-900/40 text-cyan-200 text-xs font-bold disabled:opacity-40"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Send SMS
+                </button>
+              ) : null}
             </div>
 
           </motion.div>

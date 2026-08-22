@@ -512,3 +512,13 @@ body::before {
     max-height: 320px;
   }
 }
+
+/* Browser autofill otherwise paints officer inputs light-blue on this dark form */
+.officer-field:-webkit-autofill,
+.officer-field:-webkit-autofill:hover,
+.officer-field:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f8fafc;
+  caret-color: #f8fafc;
+  box-shadow: 0 0 0 1000px #020617 inset;
+  transition: background-color 9999s ease-out;
+}

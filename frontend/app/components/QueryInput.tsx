@@ -21,6 +21,8 @@ export interface CatalogPick {
 interface QueryInputProps {
   onSubmit: (pick: CatalogPick) => void;
   isLoading: boolean;
+  /** Officer address shown as a hint only — never treated as a catalog district_id. */
+  homeDistrictHint?: string;
 }
 
 interface CommodityHit {
@@ -54,9 +56,10 @@ function useDebounced<T>(value: T, ms: number): T {
  * Unified Glassmorphic Search Header — Executive Command Bar
  * Connects directly to live Agmarknet catalog APIs.
  */
-export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
+export default function QueryInput({ onSubmit, isLoading, homeDistrictHint = "" }: QueryInputProps) {
   const [cropQuery, setCropQuery] = useState("");
   const [areaQuery, setAreaQuery] = useState("");
+  const [hintApplied, setHintApplied] = useState(false);
   const [cropHits, setCropHits] = useState<CommodityHit[]>([]);
   const [areaHits, setAreaHits] = useState<DistrictHit[]>([]);
   const [cropOpen, setCropOpen] = useState(false);
@@ -68,6 +71,12 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
   const [catalogError, setCatalogError] = useState("");
   const cropDebounced = useDebounced(cropQuery, 250);
   const areaDebounced = useDebounced(areaQuery, 250);
+
+  useEffect(() => {
+    if (hintApplied || areaPick || !homeDistrictHint.trim()) return;
+    setAreaQuery(homeDistrictHint.trim());
+    setHintApplied(true);
+  }, [homeDistrictHint, areaPick, hintApplied]);
 
   useEffect(() => {
     const q = cropDebounced.trim();
@@ -269,7 +278,11 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
                     setAreaPick(null);
                   }}
                   onFocus={() => areaHits.length > 0 && setAreaOpen(true)}
-                  placeholder="Home District (e.g. Nadia, Hooghly)"
+                  placeholder={
+                    homeDistrictHint
+                      ? `Pick live district (hint: ${homeDistrictHint})`
+                      : "Home District (e.g. Nadia, Hooghly)"
+                  }
                   autoComplete="off"
                   className={`w-full pl-10 pr-8 py-3 rounded-xl text-sm font-medium transition-all duration-200 outline-none
                     ${areaPick 
@@ -386,7 +399,7 @@ export default function QueryInput({ onSubmit, isLoading }: QueryInputProps) {
         {/* Instructions / Status bar */}
         <div className="flex items-center justify-center gap-2 mt-2.5">
           <p className="text-center text-xs text-slate-300 drop-shadow font-medium">
-            Search live Agmarknet commodities & districts to trigger real-time AI arbitrage discovery.
+            Search live Agmarknet commodities & districts to Fetch. Officer address is a hint only — pick a catalog district.
           </p>
         </div>
 

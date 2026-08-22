@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -16,7 +16,16 @@ import {
   Sparkles,
   Shield,
   Zap,
+  LogIn,
+  LogOut,
 } from "lucide-react";
+import {
+  OFFICER_AUTH_EVENT,
+  clearToken,
+  getOfficer,
+  officerLocation,
+  type OfficerProfile,
+} from "@/lib/officerAuth";
 
 interface DashboardNavbarProps {
   dataMode?: "live" | "demo";
@@ -25,6 +34,18 @@ interface DashboardNavbarProps {
 
 export default function DashboardNavbar({ isRunning }: DashboardNavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [officer, setOfficer] = useState<OfficerProfile | null>(null);
+
+  useEffect(() => {
+    const sync = () => setOfficer(getOfficer());
+    sync();
+    window.addEventListener(OFFICER_AUTH_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(OFFICER_AUTH_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   return (
     <>
@@ -65,6 +86,32 @@ export default function DashboardNavbar({ isRunning }: DashboardNavbarProps) {
 
           {/* Right Hamburger Button */}
           <div className="flex items-center gap-3">
+            {officer ? (
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-slate-900 border border-emerald-500/30 text-emerald-300 max-w-[220px] truncate">
+                  {officer.email}
+                  {officerLocation(officer) ? (
+                    <span className="text-slate-500"> · {officerLocation(officer)}</span>
+                  ) : null}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => clearToken()}
+                  className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:border-emerald-500/40"
+                >
+                  <LogOut className="w-3 h-3" />
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/officer/login"
+                className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+              >
+                <LogIn className="w-3 h-3" />
+                Officer login
+              </Link>
+            )}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="p-2.5 rounded-xl border border-emerald-500/30 bg-slate-900/80 hover:bg-slate-800 hover:border-emerald-500/60 text-slate-200 hover:text-white transition-all shadow-md flex items-center gap-2 cursor-pointer"
@@ -138,10 +185,32 @@ export default function DashboardNavbar({ isRunning }: DashboardNavbarProps) {
                       <span>Landing Page</span>
                     </Link>
 
+                    {officer ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          clearToken();
+                          setIsOpen(false);
+                        }}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-900/60 hover:bg-emerald-500/15 border border-slate-800 hover:border-emerald-500/30 text-slate-200 text-xs font-medium"
+                      >
+                        <LogOut className="w-4 h-4 text-slate-400" />
+                        <span>Logout {officer.email}</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href="/officer/login"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-900/60 hover:bg-emerald-500/15 border border-slate-800 hover:border-emerald-500/30 text-slate-200 hover:text-emerald-300 transition-all font-medium text-xs"
+                      >
+                        <LogIn className="w-4 h-4 text-slate-400" />
+                        <span>Officer login</span>
+                      </Link>
+                    )}
                     <Link
                       href="/dashboard"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold text-xs"
+                      className="col-span-2 flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 font-bold text-xs"
                     >
                       <div className="flex items-center gap-2">
                         <LayoutDashboard className="w-4 h-4 text-emerald-400" />

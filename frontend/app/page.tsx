@@ -25,7 +25,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-3 sm:gap-6">
             <Link
-              href="/dashboard"
+              href="/officer/login"
               className="px-5 py-2.5 rounded-xl border border-emerald-400/50 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 transition-all text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-950/60 flex items-center gap-2"
             >
               <span>Launch Dashboard</span>
@@ -59,7 +59,7 @@ export default function LandingPage() {
               Empowering farmers & agricultural officers with autonomous real-time APMC price discovery, logistics-adjusted net margins, and bilingual intelligence.
             </p>
 
-            <Link href="/dashboard" className="inline-flex group">
+            <Link href="/officer/login" className="inline-flex group">
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: "0 0 35px rgba(16, 185, 129, 0.6)" }}
                 whileTap={{ scale: 0.95 }}

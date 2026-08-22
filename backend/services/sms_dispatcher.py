@@ -101,4 +101,125 @@ async def dispatch_email(body: str) -> dict[str, Any]:
     }
 
 
+NO_SMS_PROVIDER = (
+    "SMS is not configured. Set FAST2SMS_API_KEY, or Twilio credentials "
+    "(TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN, or TWILIO_API_KEY + TWILIO_API_SECRET, "
+    "plus TWILIO_FROM_NUMBER). Email dispatch still works."
+)
+
+FAST2SMS_URL = "https://www.fast2sms.com/dev/bulkV2"
+
+
+def sms_provider_configured() -> bool:
+    if (settings.FAST2SMS_API_KEY or "").strip():
+        return True
+    from_number = (settings.TWILIO_FROM_NUMBER or "").strip()
+    if not from_number:
+        return False
+    sid = (settings.TWILIO_ACCOUNT_SID or "").strip()
+    token = (settings.TWILIO_AUTH_TOKEN or "").strip()
+    api_key = (settings.TWILIO_API_KEY or "").strip()
+    api_secret = (settings.TWILIO_API_SECRET or "").strip()
+    if sid and token:
+        return True
+    if sid and api_key and api_secret:
+        return True
+    return False
+
+
+def _needs_unicode(text: str) -> bool:
+    return any(ord(ch) > 127 for ch in text)
+
+
+async def send_sms(mobiles: list[str], message: str) -> dict[str, Any]:
+    """HITL SMS via Fast2SMS (preferred) or Twilio. Raises 503 if neither is configured."""
+    numbers = parse_recipients(mobiles)
+    text = (message or "").strip()
+    if not text:
+        raise ValueError("Message body is empty.")
+
+    if (settings.FAST2SMS_API_KEY or "").strip():
+        return await _send_fast2sms(numbers, text)
+    if sms_provider_configured():
+        return await _send_twilio(numbers, text)
+    raise HTTPException(status_code=503, detail=NO_SMS_PROVIDER)
+
+
+async def _send_fast2sms(numbers: list[str], text: str) -> dict[str, Any]:
+    print("[KrishiDrishti] Sending SMS via Fast2SMS")
+    log.info("Fast2SMS dispatch to %s numbers", len(numbers))
+    language = "unicode" if _needs_unicode(text) else "english"
+    async with httpx.AsyncClient(timeout=25.0) as client:
+        resp = await client.post(
+            FAST2SMS_URL,
+            headers={
+                "authorization": settings.FAST2SMS_API_KEY.strip(),
+                "Content-Type": "application/json",
+            },
+            json={
+                "route": "q",
+                "message": text,
+                "language": language,
+                "flash": 0,
+                "numbers": ",".join(numbers),
+            },
+        )
+    payload: dict[str, Any] = {}
+    try:
+        payload = resp.json()
+    except Exception:
+        payload = {"raw": resp.text[:400]}
+    if resp.status_code != 200 or str(payload.get("return", "")).lower() in {"false", "0"}:
+        error_msg = payload.get("message") or payload.get("raw") or f"HTTP {resp.status_code}"
+        log.error("Fast2SMS failed: %s", error_msg)
+        raise HTTPException(status_code=400, detail=f"Fast2SMS error: {error_msg}")
+    return {
+        "ok": True,
+        "provider": "fast2sms",
+        "simulated": False,
+        "channels": {"sms": "sent"},
+        "count": len(numbers),
+        "detail": payload,
+    }
+
+
+async def _send_twilio(numbers: list[str], text: str) -> dict[str, Any]:
+    print("[KrishiDrishti] Sending SMS via Twilio")
+    log.info("Twilio dispatch to %s numbers", len(numbers))
+    sid = (settings.TWILIO_ACCOUNT_SID or "").strip()
+    url = f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json"
+    from_number = (settings.TWILIO_FROM_NUMBER or "").strip()
+    token = (settings.TWILIO_AUTH_TOKEN or "").strip()
+    api_key = (settings.TWILIO_API_KEY or "").strip()
+    api_secret = (settings.TWILIO_API_SECRET or "").strip()
+    auth = (api_key, api_secret) if api_key and api_secret else (sid, token)
+
+    sent: list[str] = []
+    errors: list[str] = []
+    async with httpx.AsyncClient(timeout=25.0) as client:
+        for mobile in numbers:
+            resp = await client.post(
+                url,
+                auth=auth,
+                data={"From": from_number, "To": f"+91{mobile}", "Body": text},
+            )
+            if resp.status_code in (200, 201):
+                sent.append(mobile)
+            else:
+                snippet = resp.text[:200]
+                errors.append(f"{mobile}: HTTP {resp.status_code} {snippet}")
+    if not sent:
+        raise HTTPException(
+            status_code=400,
+            detail="Twilio SMS failed: " + ("; ".join(errors) or "no messages accepted"),
+        )
+    return {
+        "ok": True,
+        "provider": "twilio",
+        "simulated": False,
+        "channels": {"sms": "sent"},
+        "count": len(sent),
+        "failed": errors,
+    }
+
 

@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     TWILIO_WHATSAPP_FROM: str = ""
     FAST2SMS_API_KEY: str = ""
     WEB3FORMS_ACCESS_KEY: str = ""
+    # Local/dev fallback only — set OFFICER_JWT_SECRET in production.
+    OFFICER_JWT_SECRET: str = "krishidrishti-local-dev-only-change-me"
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [

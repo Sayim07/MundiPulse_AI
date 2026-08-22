@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import CustomCursor from "../components/CustomCursor";
 import DashboardNavbar from "../components/DashboardNavbar";
 import Hero from "../components/Hero";
@@ -11,9 +12,17 @@ import AgentTerminal, { TerminalLog } from "../components/AgentTerminal";
 import PriceTable, { PriceRecord } from "../components/PriceTable";
 import StatsCards from "../components/StatsCards";
 import ApprovalModal from "../components/ApprovalModal";
+import SmsComposeModal from "../components/SmsComposeModal";
 import DispatchToast from "../components/DispatchToast";
 import MarketMap from "../components/MarketMap";
 import { FluidParticlesBackground } from "@/components/ui/fluid-particles-background";
+import FarmerRegistry from "../components/FarmerRegistry";
+import {
+  OFFICER_AUTH_EVENT,
+  getOfficer,
+  getToken,
+  officerLocation,
+} from "@/lib/officerAuth";
 import { ShieldCheck } from "lucide-react";
 
 const API_BASE =
@@ -27,6 +36,8 @@ interface Recommendation {
   alert_english: string;
   requires_approval: boolean;
   confidence: string;
+  home_mandi?: string | null;
+  home_net_price_per_quintal?: number | null;
 }
 
 interface QueryResult {
@@ -47,6 +58,8 @@ interface DispatchInfo {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [authed, setAuthed] = useState(false);
   const [logs, setLogs] = useState<TerminalLog[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<QueryResult | null>(null);
@@ -58,6 +71,25 @@ export default function DashboardPage() {
 
   const [showToast, setShowToast] = useState(false);
   const [dispatchInfo, setDispatchInfo] = useState<DispatchInfo | null>(null);
+  const [showSms, setShowSms] = useState(false);
+
+  useEffect(() => {
+    const sync = () => {
+      if (!getToken()) {
+        setAuthed(false);
+        router.replace("/officer/login?next=/dashboard");
+        return;
+      }
+      setAuthed(true);
+    };
+    sync();
+    window.addEventListener(OFFICER_AUTH_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(OFFICER_AUTH_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [router]);
 
   const handleQuery = useCallback(async (pick: CatalogPick) => {
     setIsRunning(true);
@@ -140,10 +172,15 @@ export default function DashboardPage() {
         throw new Error("No run_id on this result. Run Fetch again before approving.");
       }
 
+      const officer = getOfficer();
+      const officerEmail = officer?.email || "sayimmullick2005@gmail.com";
+      const approvedBy = officer?.email || "organizer";
+      const recipientGroup = `Transmitted to Official Registry (prototracedev@gmail.com) from Officer (${officerEmail})`;
+
       // 1. Direct client-side Web3Forms API dispatch (bypasses server-side blocks)
       const payload = {
         access_key: "cf6839d1-354d-447d-8623-d64eebbcbb26",
-        email: "sayimmullick2005@gmail.com",
+        email: officerEmail,
         subject: "KrishiDrishti AI: Price & Transport Recommendation",
         message:
           messageText ||
@@ -178,8 +215,8 @@ export default function DashboardPage() {
           body: JSON.stringify({
             run_id: result.run_id,
             approved: true,
-            approved_by: "organizer",
-            recipients: ["sayimmullick2005@gmail.com", "prototracedev@gmail.com"],
+            approved_by: approvedBy,
+            recipients: [officerEmail, "prototracedev@gmail.com"],
           }),
         });
       } catch {
@@ -188,7 +225,7 @@ export default function DashboardPage() {
 
       setDispatchInfo({
         channel: "Web3Forms Email",
-        recipient_group: "Transmitted to Official Registry (prototracedev@gmail.com) from Officer (sayimmullick2005@gmail.com)",
+        recipient_group: recipientGroup,
         dispatched_at: new Date().toISOString(),
         delivery_status: "sent",
         channels: { email: "sent" },
@@ -200,7 +237,7 @@ export default function DashboardPage() {
         ...prev,
         {
           type: "success",
-          msg: `[KrishiDrishti] ✓ Approved. Transmitted to Official Registry (prototracedev@gmail.com) from Officer (sayimmullick2005@gmail.com) via Web3Forms.`,
+          msg: `[KrishiDrishti] ✓ Approved. ${recipientGroup} via Web3Forms.`,
         },
       ]);
     } catch (error) {
@@ -239,6 +276,14 @@ export default function DashboardPage() {
     ]);
   }, [result]);
 
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        <p className="text-sm text-slate-400">Checking officer session…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen text-slate-100 relative overflow-x-hidden">
       <CustomCursor />
@@ -248,9 +293,15 @@ export default function DashboardPage() {
 
       <main className="relative z-10 min-h-screen">
         <Hero />
+
+        <FarmerRegistry />
         
         {/* Unified Search Command Bar */}
-        <QueryInput onSubmit={handleQuery} isLoading={isRunning} />
+        <QueryInput
+          onSubmit={handleQuery}
+          isLoading={isRunning}
+          homeDistrictHint={officerLocation(getOfficer())}
+        />
 
         {/* Multi-Step Execution Pipeline Indicator */}
         <MultiStepLoader
@@ -362,6 +413,16 @@ export default function DashboardPage() {
         onReject={handleReject}
         isApproving={isApproving}
         region={result?.query?.district}
+        officerEmail={getOfficer()?.email}
+        onOpenSms={() => setShowSms(true)}
+      />
+
+      <SmsComposeModal
+        isOpen={showSms}
+        onClose={() => setShowSms(false)}
+        runId={result?.run_id || null}
+        crop={result?.query?.crop || currentCrop}
+        recommendation={result?.recommendation || null}
       />
 
       <DispatchToast

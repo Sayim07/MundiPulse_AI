@@ -67,6 +67,19 @@ def get_pending(run_id: str) -> dict | None:
         return load_state()["pending_approvals"].get(run_id)
 
 
+def get_run(run_id: str) -> dict | None:
+    """Pending store first, then history (approved/rejected)."""
+    pending = get_pending(run_id)
+    if pending is not None:
+        return pending
+    target = str(run_id or "")
+    with _LOCK:
+        for entry in load_state()["query_history"]:
+            if str(entry.get("run_id") or "") == target:
+                return entry
+    return None
+
+
 def complete_pending(run_id: str, entry: dict) -> None:
     with _LOCK:
         state = load_state()
